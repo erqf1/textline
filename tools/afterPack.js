@@ -15,7 +15,28 @@ async function remove(target) {
   await fs.promises.rm(target, { recursive: true, force: true });
 }
 
+// Bricht den Build ab, wenn eine Datei, die der Hauptprozess per require('./...') lädt, nicht in
+// app.asar gelandet ist - sonst stürzt Textline sofort beim Start ab (1.0.0/1.0.1: fileicons.js).
+function checkRequires(asarFile) {
+  const asar = require('@electron/asar');
+  const inside = new Set(asar.listPackage(asarFile).map((f) => f.replace(/\\/g, '/').replace(/^\//, '')));
+  const missing = [];
+  for (const file of inside) {
+    if (!/^src\/(shared\/)?[^/]+\.js$/.test(file)) continue;
+    const code = asar.extractFile(asarFile, file.split('/').join(path.sep)).toString('utf8');
+    for (const [, rel] of code.matchAll(/require\(\s*'(\.{1,2}\/[^']+)'\s*\)/g)) {
+      const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), rel));
+      if (![target, `${target}.js`, `${target}/index.js`].some((t) => inside.has(t))) missing.push(`${file} -> ${rel}`);
+    }
+  }
+  if (missing.length) throw new Error(`Fehlt in app.asar: ${missing.join(', ')}`);
+}
+
 exports.default = async function afterPack({ appOutDir, electronPlatformName }) {
+  checkRequires(electronPlatformName === 'darwin'
+    ? path.join(appOutDir, 'Textline.app/Contents/Resources/app.asar')
+    : path.join(appOutDir, 'resources/app.asar'));
+
   if (electronPlatformName === 'darwin') {
     const resources = path.join(
       appOutDir,
