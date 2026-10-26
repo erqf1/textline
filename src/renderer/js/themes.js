@@ -1,5 +1,5 @@
 // Designs: Farben der Oberfläche und der Syntax, jeweils hell und dunkel. Alle nehmen jede Akzentfarbe.
-// style "modern": rund, Symbolleiste (wie Cutline/Clipline/Webcase); "simple": eckig und schlicht wie der
+// style "modern": rund, Symbolleiste (wie Cutline/Clipline/Webline); "simple": eckig und schlicht wie der
 // Windows-Editor; "classic" (Minimalist): wie Notepad++ - Menü, Symbolreihe, kleine Tabs, graue Zeilennummern.
 
 const SYN = {

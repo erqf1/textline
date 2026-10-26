@@ -352,7 +352,7 @@ ipcMain.handle('py:pypi', async (_e, name) => {
   }
 });
 
-// ---------------------------------------------------------------- Updates (wie bei Webcase)
+// ---------------------------------------------------------------- Updates (wie bei Webline)
 function isTarGz() {
   if (process.platform !== 'linux') return false;
   const exe = app.getPath('exe');
