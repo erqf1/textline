@@ -158,7 +158,6 @@
 
 !macro textlineAddType EXT NAME
   WriteRegStr SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.${NAME}" ""
-  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes" ".${EXT}" ""
 !macroend
 
 !macro textlineRemoveType EXT NAME
@@ -169,8 +168,9 @@
   StrCpy $0 "Open with Textline"
   StrCmp $LANGUAGE 1031 0 +2
     StrCpy $0 "Mit Textline öffnen"
-  ; ältere Version hatte eine gemeinsame ProgID
+  ; ältere Versionen: gemeinsame ProgID, Typen zusätzlich über Applications (Programmsymbol statt Dateisymbol)
   DeleteRegKey SHCTX "Software\Classes\Textline.File"
+  DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes"
   !insertmacro textlineProgIds textlineAddProgId
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\DefaultIcon" "" "$INSTDIR\resources\filetypes\light\code.ico"
