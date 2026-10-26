@@ -14,7 +14,7 @@ export const FONTS = [
   ['"Courier New", monospace', 'Courier New'],
 ];
 
-export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, canFileIcons, page = 'general' }) {
+export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, canFileIcons, web = false, page = 'general' }) {
   const tabs = [
     ['general', T('setGeneral')],
     ['look', T('setLook')],
@@ -152,6 +152,12 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       ];
     },
     python() {
+      const running = section(T('pyRunning'),
+        check('saveBeforeRun', T('pySaveBeforeRun')),
+        check('clearConsoleOnRun', T('pyClearConsole')),
+        check('pythonCheck', T('pyCheck'), T('pyCheckHint')));
+      const packages = section(T('pkgTitle'), h('div', {}, h('button', { class: 'btn', text: T('pkgOpen'), onclick: () => openPackages() })));
+      if (web) return [section(T('pyInterpreter'), h('p', { class: 'muted', text: T('webPyInfo', { version: '3.14' }) })), running, packages];
       const status = h('div', { class: 'py-status muted', text: T('pyChecking') });
       const path = h('input', { class: 'input', value: S.pythonPath || '', placeholder: T('pyPathPlaceholder'), spellcheck: 'false' });
       const browse = h('button', { class: 'btn', text: T('browse') });
@@ -183,11 +189,8 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       refresh();
       return [
         section(T('pyInterpreter'), modes, h('small', { class: 'muted', text: T('pyModeHint') }), pathRow, status),
-        section(T('pyRunning'),
-          check('saveBeforeRun', T('pySaveBeforeRun')),
-          check('clearConsoleOnRun', T('pyClearConsole')),
-          check('pythonCheck', T('pyCheck'), T('pyCheckHint'))),
-        section(T('pkgTitle'), h('div', {}, h('button', { class: 'btn', text: T('pkgOpen'), onclick: () => openPackages() }))),
+        running,
+        packages,
       ];
     },
   };

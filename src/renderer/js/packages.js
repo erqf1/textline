@@ -28,7 +28,8 @@ export async function openPackages({ api, T, getPython, onChanged }) {
   const detail = h('div', { class: 'pkg-detail' });
   const log = h('pre', { class: 'pkg-log' });
   const logWrap = h('div', { class: 'pkg-logwrap' }, h('div', { class: 'pkg-logtitle', text: T('pkgLog') }), log);
-  const envLine = h('div', { class: 'pkg-env', text: py.kind === 'env' ? T('pkgEnvOwn', { version: py.version }) : T('pkgEnvSystem', { version: py.version, path: py.python }) });
+  const envText = py.kind === 'web' ? T('webPyInfo', { version: py.version }) : py.kind === 'env' ? T('pkgEnvOwn', { version: py.version }) : T('pkgEnvSystem', { version: py.version, path: py.python });
+  const envLine = h('div', { class: 'pkg-env', text: envText });
 
   const body = h('div', { class: 'pkg no-enter' },
     h('div', { class: 'pkg-left' },

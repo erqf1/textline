@@ -31,6 +31,7 @@ let S = { ...DEFAULTS };
 let INFO = { platform: 'win32' };
 let systemDark = true;
 let MAC = false;
+let WEB = false; // Textline im Browser (src/web/api.js statt Electron)
 const T = (key, vars) => i18n.t(S.language || i18n.guess(navigator.language), key, vars);
 
 const tabs = [];
@@ -162,7 +163,7 @@ function makeListener() {
       if (dirty !== active.dirty) {
         active.dirty = dirty;
         renderTabs();
-        renderClassicBar();
+        renderToolbar(); // zeichnet auch die Notepad++-Leiste (Speichern-Knopf zeigt "geändert")
         updateTitle();
       }
       scheduleSession();
@@ -440,9 +441,11 @@ async function save(tb = active) {
   return true;
 }
 
+const fileNameFor = (tb) => (tb.path ? baseName(tb.path) : `${tabTitle(tb).replace(/\s+/g, '')}.${defaultExtension(tb.lang)}`);
+
 async function saveAs(tb = active) {
   if (!tb) return false;
-  const name = tb.path ? baseName(tb.path) : `${tabTitle(tb).replace(/\s+/g, '')}.${defaultExtension(tb.lang)}`;
+  const name = fileNameFor(tb);
   const dir = tb.path ? dirName(tb.path) : (S.lastDir || INFO.home);
   const file = await api.saveDialog({ title: T('saveAs'), defaultPath: `${dir}${INFO.platform === 'win32' ? '\\' : '/'}${name}`, filters: fileFilters(tb.lang) });
   if (!file) return false;
@@ -1008,6 +1011,9 @@ const CMD = {
     api.openPath(active.path);
   } },
   reveal: { label: 'revealInFolder', run: () => active && active.path && api.reveal(active.path) },
+  // nur im Browser (mert.win/text/editor): Datei herunterladen bzw. auf dem Handy teilen
+  download: { label: 'webDownload', run: () => active && api.download(fileNameFor(active), view.state.doc.toString(), active) },
+  share: { label: 'webShare', run: () => active && api.share(fileNameFor(active), view.state.doc.toString(), active) },
   copyPath: { label: 'copyPath', run: () => active && active.path && navigator.clipboard.writeText(active.path).then(() => toast(T('pathCopied'))) },
   settings: { label: 'settings', keys: 'Mod+,', run: () => settingsDialog() },
   shortcuts: { label: 'shortcuts', run: shortcutsDialog },
@@ -1036,9 +1042,12 @@ function menus() {
       { label: T('recent'), submenu: () => recent.length ? [...recent.map((p) => ({ label: p.length > 70 ? `…${p.slice(-68)}` : p, run: () => openPaths([p]) })), '-', { label: T('clearRecent'), run: () => update({ recent: [] }) }] : [{ label: T('noRecent'), disabled: true }] },
       '-', item('save', { disabled: noTab() }), item('saveAs', { disabled: noTab() }), item('saveAll', { disabled: !tabs.some((t) => t.dirty) }),
       item('reload', { disabled: !active || !active.path }),
-      '-', item('print', { disabled: noTab() }), item('reveal', { disabled: !active || !active.path }), item('copyPath', { disabled: !active || !active.path }),
+      '-', item('print', { disabled: noTab() }),
+      ...(WEB
+        ? [item('download', { disabled: noTab() }), INFO.canShare ? item('share', { disabled: noTab() }) : null].filter(Boolean)
+        : [item('reveal', { disabled: !active || !active.path }), item('copyPath', { disabled: !active || !active.path })]),
       '-', item('closeTab', { disabled: noTab() }), item('closeAll', { disabled: !tabs.length }), item('reopenClosed', { disabled: !closed.length }),
-      '-', item('quit'),
+      ...(WEB ? [] : ['-', item('quit')]),
     ] },
     { id: 'edit', label: T('menuEdit'), items: [
       { ...item('undo'), shortcut: keyLabel('Mod+Z', MAC), disabled: noTab() }, { ...item('redo'), shortcut: keyLabel(MAC ? 'Mod+Shift+Z' : 'Mod+Y', MAC), disabled: noTab() },
@@ -1074,7 +1083,7 @@ function menus() {
 
 function settingsDialog(page) {
   openSettings({
-    S, update, T, api, page, systemDark: () => systemDark, canFileIcons: !!INFO.fileIcons,
+    S, update, T, api, page, systemDark: () => systemDark, canFileIcons: !!INFO.fileIcons, web: WEB,
     languages: i18n.LANGS.map(([code, name]) => [code, name]),
     openPackages: () => CMD.packages.run(),
     pythonInfo: async () => {
@@ -1258,6 +1267,8 @@ function renderToolbar() {
     return b;
   };
   const running = consoleApi && consoleApi.isRunning();
+  // im Browser (vor allem am Handy) gibt es kein Strg+S - Speichern als Knopf, hervorgehoben bei Änderungen
+  if (WEB && active) btn('save', `${T('save')} (${keyLabel('Mod+S', MAC)})`, () => save(), active.dirty ? 'on' : '');
   if (isPython(active)) {
     if (running) btn('stop', `${T('stop')} (${keyLabel('Shift+F5', MAC)})`, stopRun, 'danger');
     btn('run', `${T('run')} (F5)`, runCurrent, 'run');
@@ -1380,7 +1391,9 @@ function splitter(el, onMove) {
 async function main() {
   [S, INFO] = await Promise.all([api.getSettings(), api.info()]);
   S = { ...DEFAULTS, ...S };
-  MAC = INFO.platform === 'darwin';
+  MAC = INFO.platform === 'darwin' || !!INFO.mac;
+  WEB = INFO.platform === 'web';
+  if (WEB) S.restoreSession = true; // im Browser gibt es kein "Beenden" - offene Tabs bleiben immer erhalten
   systemDark = INFO.dark;
   document.documentElement.dataset.platform = INFO.platform;
   document.documentElement.lang = S.language || i18n.guess(navigator.language);
@@ -1455,14 +1468,15 @@ async function main() {
   document.addEventListener('dragleave', (e) => {
     if (!e.relatedTarget) document.body.classList.remove('dropping');
   });
-  document.addEventListener('drop', (e) => {
+  document.addEventListener('drop', async (e) => {
     document.body.classList.remove('dropping');
-    const list = [...(e.dataTransfer ? e.dataTransfer.files : [])].map((f) => api.pathForFile(f)).filter(Boolean);
-    if (list.length) {
-      e.preventDefault();
-      e.stopPropagation();
-      openPaths(list);
-    }
+    const files = [...(e.dataTransfer ? e.dataTransfer.files : [])];
+    if (!files.length) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Im Browser gibt es keine Pfade: die Dateien werden in den Browser-Speicher übernommen
+    const list = api.importFiles ? await api.importFiles(files) : files.map((f) => api.pathForFile(f)).filter(Boolean);
+    if (list.length) openPaths(list);
   }, true);
 
   const initial = await api.initialFiles();
