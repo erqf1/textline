@@ -9,7 +9,9 @@
   "scripts": {
     "bundle": "node build.mjs",
     "start": "node build.mjs && electron .",
-    "build": "node build.mjs && electron-builder -wlm"
+    "icon": "node tools/make-icon.js",
+    "build": "node build.mjs && electron-builder",
+    "build:win": "node build.mjs && electron-builder -w"
   },
   "license": "MIT",
   "author": {
@@ -46,5 +48,286 @@
   "allowScripts": {
     "electron@44.9.3": true,
     "esbuild@0.28.2": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erqf1/textline.git"
+  },
+  "engines": {
+    "node": ">=22.2"
+  },
+  "build": {
+    "appId": "win.mert.Textline",
+    "productName": "Textline",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/main.js",
+      "src/preload.js",
+      "src/files.js",
+      "src/python.js",
+      "src/shared/**/*",
+      "src/renderer/index.html",
+      "src/renderer/style.css",
+      "src/renderer/dist/**/*",
+      "assets/icon.png",
+      "package.json"
+    ],
+    "afterPack": "tools/afterPack.js",
+    "publish": {
+      "provider": "github",
+      "owner": "erqf1",
+      "repo": "textline"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "Textline-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "Textline-${version}-portable.${ext}"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Development",
+      "syncDesktopName": true,
+      "synopsis": "Text- und Code-Editor mit Farben für viele Sprachen und Python",
+      "artifactName": "Textline-${version}-${arch}.${ext}",
+      "mimeTypes": [
+        "text/plain",
+        "text/markdown",
+        "text/x-markdown",
+        "text/x-log",
+        "text/csv",
+        "text/tab-separated-values",
+        "application/json",
+        "application/xml",
+        "text/xml",
+        "application/x-yaml",
+        "application/toml",
+        "text/x-python",
+        "text/x-python3",
+        "application/x-python-code",
+        "text/html",
+        "text/css",
+        "text/x-scss",
+        "application/javascript",
+        "text/javascript",
+        "application/typescript",
+        "text/x-csrc",
+        "text/x-chdr",
+        "text/x-c++src",
+        "text/x-c++hdr",
+        "text/x-csharp",
+        "text/x-java",
+        "text/x-go",
+        "text/rust",
+        "application/x-ruby",
+        "application/x-php",
+        "text/x-lua",
+        "application/x-shellscript",
+        "text/x-sql",
+        "text/x-tex",
+        "text/x-diff",
+        "application/x-desktop",
+        "text/x-cmake",
+        "text/x-makefile",
+        "image/svg+xml"
+      ],
+      "desktop": {
+        "entry": {
+          "Keywords": "text;editor;code;python;notepad;"
+        }
+      },
+      "target": [
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "pacman",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "deb": {
+      "artifactName": "Textline-${version}-amd64.${ext}"
+    },
+    "pacman": {
+      "artifactName": "Textline-${version}-x86_64.${ext}"
+    },
+    "mac": {
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "fileAssociations": [
+        {
+          "ext": [
+            "txt",
+            "text",
+            "log",
+            "md",
+            "markdown",
+            "rst",
+            "csv",
+            "tsv",
+            "ini",
+            "cfg",
+            "conf",
+            "toml",
+            "yaml",
+            "yml",
+            "json",
+            "jsonc",
+            "xml",
+            "properties",
+            "env",
+            "gitignore",
+            "editorconfig",
+            "diff",
+            "patch",
+            "srt",
+            "tex"
+          ],
+          "name": "Text",
+          "role": "Editor"
+        },
+        {
+          "ext": [
+            "py",
+            "pyw",
+            "pyi"
+          ],
+          "name": "Python",
+          "role": "Editor"
+        },
+        {
+          "ext": [
+            "html",
+            "htm",
+            "css",
+            "scss",
+            "sass",
+            "less",
+            "js",
+            "mjs",
+            "cjs",
+            "jsx",
+            "ts",
+            "tsx",
+            "vue",
+            "svelte",
+            "c",
+            "h",
+            "cpp",
+            "cc",
+            "cxx",
+            "hpp",
+            "hh",
+            "cs",
+            "java",
+            "kt",
+            "kts",
+            "go",
+            "rs",
+            "rb",
+            "php",
+            "lua",
+            "pl",
+            "r",
+            "swift",
+            "dart",
+            "scala",
+            "sql",
+            "sh",
+            "bash",
+            "zsh",
+            "fish",
+            "ps1",
+            "psm1",
+            "bat",
+            "cmd",
+            "cmake",
+            "gradle",
+            "groovy",
+            "hs",
+            "elm",
+            "erl",
+            "ex",
+            "exs",
+            "clj",
+            "jl",
+            "nim",
+            "zig",
+            "v",
+            "sv",
+            "vhd",
+            "asm",
+            "s",
+            "f90",
+            "pas",
+            "m",
+            "mm",
+            "vb",
+            "fs",
+            "ml",
+            "svg",
+            "proto",
+            "graphql",
+            "dockerfile",
+            "nix",
+            "tf"
+          ],
+          "name": "Source code",
+          "role": "Editor"
+        }
+      ],
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Textline-${version}-mac-${arch}.${ext}"
+    }
   }
 }

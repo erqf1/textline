@@ -69,7 +69,7 @@ function update(patch) {
 function applyLook() {
   const { dark } = applyTheme(S, systemDark);
   for (const tb of tabs) tb.state = tb === active ? tb.state : tb.state.update({ effects: E.reconfigure(editorOptions(tb), ['dark']) }).state;
-  if (view) view.dispatch({ effects: E.reconfigure(editorOptions(active), ['dark']) });
+  if (view && active) view.dispatch({ effects: E.reconfigure(editorOptions(active), ['dark']) });  // ohne Tab (Startbildschirm) nichts zu tun
   document.documentElement.dataset.dark = dark ? '1' : '0';
   if (previewApi) previewApi.reset();
   updatePreview();
@@ -315,7 +315,7 @@ function showWelcome() {
 }
 
 function logoSvg() {
-  return '<svg viewBox="0 0 64 64" width="56" height="56"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc24b"/><stop offset="1" stop-color="#f0782a"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="14" fill="url(#lg)"/><path d="M17 22h22M17 32h30M17 42h16" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M44 36v14" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>';
+  return '<svg viewBox="0 0 64 64" width="56" height="56"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc24b"/><stop offset="1" stop-color="#f0782a"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="14" fill="url(#lg)"/><path d="M17 19h24M17 29h30M17 41h14" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M38 36v10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>';
 }
 
 // ---------------------------------------------------------------- Dateien

@@ -12,7 +12,9 @@ const { t: tr } = require('./shared/i18n');
 
 const APP_ID = 'win.mert.Textline';
 const REPO = 'erqf1/textline';
-const selfTest = process.argv.includes('--selftest') ? process.argv[process.argv.indexOf('--selftest') + 1] : null;
+// --selftest <ordner>: Selbsttest; --siteshots <ordner>: Bilder für die Website (beides unsichtbar)
+const testArg = ['--selftest', '--siteshots'].find((a) => process.argv.includes(a));
+const selfTest = testArg ? process.argv[process.argv.indexOf(testArg) + 1] : null;
 
 if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
 if (selfTest) app.setPath('userData', path.join(selfTest, 'userdata'));
@@ -45,7 +47,7 @@ function filesFromArgs(argv, cwd) {
   const args = argv.slice(app.isPackaged ? 1 : 2);
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '--selftest') {
+    if (a === '--selftest' || a === '--siteshots') {
       i++;
       continue;
     }
@@ -437,7 +439,7 @@ app.whenReady().then(() => {
   buildMenu();
   createWindow();
   setupAutoUpdate();
-  if (selfTest) require(path.join(__dirname, '..', 'tools', 'selftest.js'))(win, selfTest, { python });
+  if (selfTest) require(path.join(__dirname, '..', 'tools', testArg === '--siteshots' ? 'siteshots.js' : 'selftest.js'))(win, selfTest, { python });
 });
 
 app.on('before-quit', () => {

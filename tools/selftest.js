@@ -296,6 +296,15 @@ module.exports = function selftest(win, dir, { python }) {
         await wait(250);
       }
       await shot('welcome-de');
+      // Design wechseln ohne offenen Tab (Einstellungen vom Startbildschirm aus)
+      let lookErr = '';
+      try {
+        await act(`window.__textline.update({ theme: 'ocean', mode: 'light', accent: '#4aa3ff' })`);
+        await act(`window.__textline.update({ theme: 'standard', mode: 'dark', accent: '' })`);
+      } catch (e) {
+        lookErr = String(e && e.message);
+      }
+      check('changing the look without an open tab', !lookErr, lookErr);
       await act(`window.__textline.update({ language: 'ja' })`);
       await shot('welcome-ja');
     } catch (e) {

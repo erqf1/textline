@@ -1,0 +1,145 @@
+﻿; Windows: Textline unter "Öffnen mit" für Text- und Code-Dateien eintragen und "Mit Textline öffnen"
+; ins Kontextmenü aller Dateien. Absichtlich OHNE das Standard-Programm umzustellen (das macht
+; electron-builders fileAssociations): .bat/.ps1 würden sonst nicht mehr starten, .py nicht mehr laufen.
+; SHCTX folgt der Wahl "nur für mich" / "für alle" im Installer.
+
+!macro textlineTypes CMD
+  !insertmacro ${CMD} "txt"
+  !insertmacro ${CMD} "text"
+  !insertmacro ${CMD} "log"
+  !insertmacro ${CMD} "md"
+  !insertmacro ${CMD} "markdown"
+  !insertmacro ${CMD} "rst"
+  !insertmacro ${CMD} "csv"
+  !insertmacro ${CMD} "tsv"
+  !insertmacro ${CMD} "ini"
+  !insertmacro ${CMD} "cfg"
+  !insertmacro ${CMD} "conf"
+  !insertmacro ${CMD} "toml"
+  !insertmacro ${CMD} "yaml"
+  !insertmacro ${CMD} "yml"
+  !insertmacro ${CMD} "json"
+  !insertmacro ${CMD} "jsonc"
+  !insertmacro ${CMD} "xml"
+  !insertmacro ${CMD} "properties"
+  !insertmacro ${CMD} "env"
+  !insertmacro ${CMD} "gitignore"
+  !insertmacro ${CMD} "editorconfig"
+  !insertmacro ${CMD} "diff"
+  !insertmacro ${CMD} "patch"
+  !insertmacro ${CMD} "srt"
+  !insertmacro ${CMD} "tex"
+  !insertmacro ${CMD} "py"
+  !insertmacro ${CMD} "pyw"
+  !insertmacro ${CMD} "pyi"
+  !insertmacro ${CMD} "html"
+  !insertmacro ${CMD} "htm"
+  !insertmacro ${CMD} "css"
+  !insertmacro ${CMD} "scss"
+  !insertmacro ${CMD} "sass"
+  !insertmacro ${CMD} "less"
+  !insertmacro ${CMD} "js"
+  !insertmacro ${CMD} "mjs"
+  !insertmacro ${CMD} "cjs"
+  !insertmacro ${CMD} "jsx"
+  !insertmacro ${CMD} "ts"
+  !insertmacro ${CMD} "tsx"
+  !insertmacro ${CMD} "vue"
+  !insertmacro ${CMD} "svelte"
+  !insertmacro ${CMD} "c"
+  !insertmacro ${CMD} "h"
+  !insertmacro ${CMD} "cpp"
+  !insertmacro ${CMD} "cc"
+  !insertmacro ${CMD} "cxx"
+  !insertmacro ${CMD} "hpp"
+  !insertmacro ${CMD} "hh"
+  !insertmacro ${CMD} "cs"
+  !insertmacro ${CMD} "java"
+  !insertmacro ${CMD} "kt"
+  !insertmacro ${CMD} "kts"
+  !insertmacro ${CMD} "go"
+  !insertmacro ${CMD} "rs"
+  !insertmacro ${CMD} "rb"
+  !insertmacro ${CMD} "php"
+  !insertmacro ${CMD} "lua"
+  !insertmacro ${CMD} "pl"
+  !insertmacro ${CMD} "r"
+  !insertmacro ${CMD} "swift"
+  !insertmacro ${CMD} "dart"
+  !insertmacro ${CMD} "scala"
+  !insertmacro ${CMD} "sql"
+  !insertmacro ${CMD} "sh"
+  !insertmacro ${CMD} "bash"
+  !insertmacro ${CMD} "zsh"
+  !insertmacro ${CMD} "fish"
+  !insertmacro ${CMD} "ps1"
+  !insertmacro ${CMD} "psm1"
+  !insertmacro ${CMD} "bat"
+  !insertmacro ${CMD} "cmd"
+  !insertmacro ${CMD} "cmake"
+  !insertmacro ${CMD} "gradle"
+  !insertmacro ${CMD} "groovy"
+  !insertmacro ${CMD} "hs"
+  !insertmacro ${CMD} "elm"
+  !insertmacro ${CMD} "erl"
+  !insertmacro ${CMD} "ex"
+  !insertmacro ${CMD} "exs"
+  !insertmacro ${CMD} "clj"
+  !insertmacro ${CMD} "jl"
+  !insertmacro ${CMD} "nim"
+  !insertmacro ${CMD} "zig"
+  !insertmacro ${CMD} "v"
+  !insertmacro ${CMD} "sv"
+  !insertmacro ${CMD} "vhd"
+  !insertmacro ${CMD} "asm"
+  !insertmacro ${CMD} "s"
+  !insertmacro ${CMD} "f90"
+  !insertmacro ${CMD} "pas"
+  !insertmacro ${CMD} "m"
+  !insertmacro ${CMD} "mm"
+  !insertmacro ${CMD} "vb"
+  !insertmacro ${CMD} "fs"
+  !insertmacro ${CMD} "ml"
+  !insertmacro ${CMD} "svg"
+  !insertmacro ${CMD} "proto"
+  !insertmacro ${CMD} "graphql"
+  !insertmacro ${CMD} "dockerfile"
+  !insertmacro ${CMD} "nix"
+  !insertmacro ${CMD} "tf"
+!macroend
+
+!macro textlineAddType EXT
+  WriteRegStr SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File" ""
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes" ".${EXT}" ""
+!macroend
+
+!macro textlineRemoveType EXT
+  DeleteRegValue SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
+!macroend
+
+!macro customInstall
+  StrCpy $0 "Open with Textline"
+  StrCmp $LANGUAGE 1031 0 +2
+    StrCpy $0 "Mit Textline öffnen"
+  WriteRegStr SHCTX "Software\Classes\Textline.File" "" "Textline"
+  WriteRegStr SHCTX "Software\Classes\Textline.File\DefaultIcon" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\Classes\Textline.File\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\DefaultIcon" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  !insertmacro textlineTypes textlineAddType
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "" "$0"
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+!macroend
+
+!macro customUnInstall
+  ${ifNot} ${isUpdated}
+    !insertmacro textlineTypes textlineRemoveType
+    DeleteRegKey SHCTX "Software\Classes\Textline.File"
+    DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
+    DeleteRegKey SHCTX "Software\Classes\*\shell\Textline"
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+  ${endIf}
+!macroend
