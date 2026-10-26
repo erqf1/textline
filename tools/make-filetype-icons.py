@@ -200,6 +200,9 @@ def write_icns(path, render):
 
 for sub in ('light', 'dark', 'mac'):
     os.makedirs(os.path.join(OUT, sub), exist_ok=True)
+    for f in os.listdir(os.path.join(OUT, sub)):  # Symbole entfernter Typen nicht mehr mitliefern
+        if os.path.splitext(f)[0] not in TYPES['icons']:
+            os.remove(os.path.join(OUT, sub, f))
 for name, t in TYPES['icons'].items():
     label, color = t['label'], t['color']
     for variant in ('light', 'dark'):
@@ -209,77 +212,183 @@ for name, t in TYPES['icons'].items():
 print(f"{len(TYPES['icons'])} Dateisymbole nach {OUT}")
 
 # ---------------------------------------------------------------- Windows: installer.nsh
-# Nur "Öffnen mit" + Kontextmenü, ohne Standard-Programme umzustellen (.bat/.ps1 starten weiter, .py läuft weiter).
-# Je Symbol eine eigene ProgID (Textline.py, Textline.md ...) - wählt man Textline als Standard, zeigt der Explorer
-# das passende Dateisymbol. SHCTX folgt der Wahl "nur für mich" / "für alle" im Installer.
-L = []
-L.append('; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - nicht von Hand ändern.')
-L.append('; Windows: Textline unter "Öffnen mit" für Text- und Code-Dateien eintragen, mit eigenem Dateisymbol je Typ,')
-L.append('; und "Mit Textline öffnen" ins Kontextmenü aller Dateien. Absichtlich OHNE das Standard-Programm umzustellen.')
-L.append('')
-L.append('!macro textlineTypes ADD')
-for name, t in TYPES['icons'].items():
-    for e in t['exts']:
-        L.append(f'  !insertmacro ${{ADD}} "{e}" "{name}"')
-L.append('!macroend')
-L.append('')
-L.append('!macro textlineProgIds CMD')
-for name in TYPES['icons']:
-    L.append(f'  !insertmacro ${{CMD}} "{name}"')
-L.append('!macroend')
-L.append('')
-L.append('!macro textlineAddProgId NAME')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Textline.${NAME}" "" "Textline"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Textline.${NAME}\\DefaultIcon" "" "$INSTDIR\\resources\\filetypes\\light\\${NAME}.ico"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Textline.${NAME}\\shell\\open\\command" "" \'"$INSTDIR\\${APP_EXECUTABLE_FILENAME}" "%1"\'')
-L.append('!macroend')
-L.append('')
-L.append('!macro textlineRemoveProgId NAME')
-L.append('  DeleteRegKey SHCTX "Software\\Classes\\Textline.${NAME}"')
-L.append('  ; Textline kann das Symbol (hell/dunkel) für den Benutzer umgestellt haben')
-L.append('  DeleteRegKey HKCU "Software\\Classes\\Textline.${NAME}"')
-L.append('!macroend')
-L.append('')
-# Nur die ProgID unter "Öffnen mit" - kein zweiter Eintrag über Applications\Textline.exe\SupportedTypes: wählt man
-# den, nimmt Windows für alle Typen dasselbe Programmsymbol statt der Dateisymbole.
-L.append('!macro textlineAddType EXT NAME')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\.${EXT}\\OpenWithProgids" "Textline.${NAME}" ""')
-L.append('!macroend')
-L.append('')
-L.append('!macro textlineRemoveType EXT NAME')
-L.append('  DeleteRegValue SHCTX "Software\\Classes\\.${EXT}\\OpenWithProgids" "Textline.${NAME}"')
-L.append('!macroend')
-L.append('')
-L.append('!macro customInstall')
-L.append('  StrCpy $0 "Open with Textline"')
-L.append('  StrCmp $LANGUAGE 1031 0 +2')
-L.append('    StrCpy $0 "Mit Textline öffnen"')
-L.append('  ; ältere Versionen: gemeinsame ProgID, Typen zusätzlich über Applications (Programmsymbol statt Dateisymbol)')
-L.append('  DeleteRegKey SHCTX "Software\\Classes\\Textline.File"')
-L.append('  DeleteRegKey SHCTX "Software\\Classes\\Applications\\${APP_EXECUTABLE_FILENAME}\\SupportedTypes"')
-L.append('  !insertmacro textlineProgIds textlineAddProgId')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Applications\\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Applications\\${APP_EXECUTABLE_FILENAME}\\DefaultIcon" "" "$INSTDIR\\resources\\filetypes\\light\\code.ico"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\Applications\\${APP_EXECUTABLE_FILENAME}\\shell\\open\\command" "" \'"$INSTDIR\\${APP_EXECUTABLE_FILENAME}" "%1"\'')
-L.append('  !insertmacro textlineTypes textlineAddType')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\*\\shell\\Textline" "" "$0"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\*\\shell\\Textline" "Icon" "$INSTDIR\\${APP_EXECUTABLE_FILENAME},0"')
-L.append('  WriteRegStr SHCTX "Software\\Classes\\*\\shell\\Textline\\command" "" \'"$INSTDIR\\${APP_EXECUTABLE_FILENAME}" "%1"\'')
-L.append("  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'")
-L.append('!macroend')
-L.append('')
-L.append('!macro customUnInstall')
-L.append('  ${ifNot} ${isUpdated}')
-L.append('    !insertmacro textlineTypes textlineRemoveType')
-L.append('    !insertmacro textlineProgIds textlineRemoveProgId')
-L.append('    DeleteRegKey SHCTX "Software\\Classes\\Applications\\${APP_EXECUTABLE_FILENAME}"')
-L.append('    DeleteRegKey SHCTX "Software\\Classes\\*\\shell\\Textline"')
-L.append("    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'")
-L.append('  ${endIf}')
-L.append('!macroend')
+# Nur "Öffnen mit" + Kontextmenü - nie den Standardwert von .<endung> oder UserChoice. Je Symbol eine eigene ProgID
+# (Textline.py, Textline.md ...): wählt man Textline als Standard, zeigt der Explorer das passende Dateisymbol.
+# Ausführbare Dateien und Skripte (scripts.never) bekommen keinen Öffnen-mit-Eintrag, sonst zeigt Windows beim
+# Doppelklick auf eine .bat "Wählen Sie eine App aus" statt sie auszuführen. scripts.edit: "Mit Textline bearbeiten".
+SCRIPTS = TYPES['scripts']
+clash = sorted({e for t in TYPES['icons'].values() for e in t['exts']} & set(SCRIPTS['never']))
+assert not clash, f'Diese Endungen dürfen nicht unter "Öffnen mit" stehen: {clash}'
+assert set(SCRIPTS['edit']) <= set(SCRIPTS['never'])
+
+
+def macro_list(name, rows):
+    return '\n'.join([f'!macro {name} CMD', *(f'  !insertmacro ${{CMD}} ' + ' '.join(f'"{a}"' for a in row) for row in rows), '!macroend'])
+
+
+LISTS = '\n\n'.join([
+    '; Typen unter "Öffnen mit": Endung, Symbol/ProgID',
+    macro_list('textlineTypes', [(e, name) for name, t in TYPES['icons'].items() for e in t['exts']]),
+    macro_list('textlineProgIds', [(name,) for name in TYPES['icons']]),
+    '; ausführbare Dateien und Skripte: nie unter "Öffnen mit"',
+    macro_list('textlineScripts', [(e,) for e in SCRIPTS['never']]),
+    '; davon diese mit "Mit Textline bearbeiten" im Kontextmenü',
+    macro_list('textlineEditTypes', [(e,) for e in SCRIPTS['edit']]),
+    '; ProgIDs älterer Versionen (gemeinsame ProgID, Skript-Typen)',
+    macro_list('textlineRetiredProgIds', [(n,) for n in SCRIPTS['retiredProgIds']]),
+])
+
+NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - nicht von Hand ändern.
+; Windows: Textline unter "Öffnen mit" für Text- und Code-Dateien (je Typ eine ProgID mit eigenem Dateisymbol) und
+; "Mit Textline öffnen" im Kontextmenü aller Dateien. Den Standardwert von .<endung> und UserChoice fasst Textline nie an.
+; Ausführbare Dateien und Skripte (.bat, .js, .ps1 ...) stehen NICHT unter "Öffnen mit" - sonst zeigt Windows beim
+; Doppelklick "Wählen Sie eine App aus" statt sie auszuführen -, sondern haben nur "Mit Textline bearbeiten" im Kontextmenü.
+; SHCTX = HKCU bei "Nur für mich" (Standard), HKLM nur bei "Für alle Benutzer".
+
+@LISTS@
+
+; Schlüssel löschen, wenn er ganz leer ist (keine Unterschlüssel, keine Werte, auch kein Standardwert)
+!macro textlineDeleteIfEmpty ROOT KEY
+  Push $R1
+  ClearErrors
+  EnumRegKey $R1 ${ROOT} "${KEY}" 0
+  ${IfNot} ${Errors}
+  ${AndIf} $R1 == ""
+    ClearErrors
+    EnumRegValue $R1 ${ROOT} "${KEY}" 0
+    ${If} ${Errors}
+      DeleteRegKey ${ROOT} "${KEY}"
+    ${EndIf}
+  ${EndIf}
+  Pop $R1
+!macroend
+
+; alle Werte "Textline.*" aus .<endung>\OpenWithProgids entfernen, danach die Schlüssel, falls leer
+!macro textlineDropOpenWith ROOT EXT
+  Push $R1
+  Push $R2
+  Push $R3
+  StrCpy $R3 0
+  ${Do}
+    ClearErrors
+    EnumRegValue $R1 ${ROOT} "Software\Classes\.${EXT}\OpenWithProgids" $R3
+    ${If} ${Errors}
+      ${Break}
+    ${EndIf}
+    StrCpy $R2 $R1 9
+    ClearErrors
+    ${If} $R2 == "Textline."
+      DeleteRegValue ${ROOT} "Software\Classes\.${EXT}\OpenWithProgids" $R1
+    ${Else}
+      SetErrors
+    ${EndIf}
+    ${If} ${Errors}  ; Wert bleibt (anderes Programm oder keine Rechte): weiter mit dem nächsten
+      IntOp $R3 $R3 + 1
+    ${EndIf}
+  ${Loop}
+  !insertmacro textlineDeleteIfEmpty ${ROOT} "Software\Classes\.${EXT}\OpenWithProgids"
+  !insertmacro textlineDeleteIfEmpty ${ROOT} "Software\Classes\.${EXT}"
+  Pop $R3
+  Pop $R2
+  Pop $R1
+!macroend
+
+!macro textlineAddProgId NAME
+  WriteRegStr SHCTX "Software\Classes\Textline.${NAME}" "" "Textline"
+  WriteRegStr SHCTX "Software\Classes\Textline.${NAME}\DefaultIcon" "" "$INSTDIR\resources\filetypes\light\${NAME}.ico"
+  WriteRegStr SHCTX "Software\Classes\Textline.${NAME}\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+!macroend
+
+!macro textlineRemoveProgId NAME
+  DeleteRegKey SHCTX "Software\Classes\Textline.${NAME}"
+  ; Textline kann das Symbol (hell/dunkel) für den Benutzer umgestellt haben
+  DeleteRegKey HKCU "Software\Classes\Textline.${NAME}"
+!macroend
+
+; in HKCU und HKLM (HKLM klappt nur mit Adminrechten, sonst passiert dort nichts)
+!macro textlineDropRetiredProgId NAME
+  DeleteRegKey HKCU "Software\Classes\Textline.${NAME}"
+  DeleteRegKey HKLM "Software\Classes\Textline.${NAME}"
+!macroend
+
+; Nur die ProgID unter "Öffnen mit" - kein Eintrag über Applications\Textline.exe\SupportedTypes (sonst nimmt Windows
+; für alle Typen das Programmsymbol). Vorher den Rest der Vorabversion entfernen (gemeinsame ProgID Textline.File).
+!macro textlineAddType EXT NAME
+  DeleteRegValue HKCU "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
+  DeleteRegValue HKLM "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
+  WriteRegStr SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.${NAME}" ""
+!macroend
+
+!macro textlineRemoveType EXT NAME
+  !insertmacro textlineDropOpenWith SHCTX "${EXT}"
+  !insertmacro textlineDropOpenWith HKCU "${EXT}"
+!macroend
+
+; Skript-Typen: alle Textline-Einträge unter "Öffnen mit" entfernen (HKCU und, mit Adminrechten, HKLM)
+!macro textlineCleanScript EXT
+  !insertmacro textlineDropOpenWith HKCU "${EXT}"
+  !insertmacro textlineDropOpenWith HKLM "${EXT}"
+!macroend
+
+; Skript-Typen: nur "Mit Textline bearbeiten" im Kontextmenü. Gleicher Verb-Name wie *\shell\Textline - der Explorer
+; zeigt dann nur diesen Eintrag statt zusätzlich "Mit Textline öffnen".
+!macro textlineAddEdit EXT
+  WriteRegStr SHCTX "Software\Classes\SystemFileAssociations\.${EXT}\shell\Textline" "" "$1"
+  WriteRegStr SHCTX "Software\Classes\SystemFileAssociations\.${EXT}\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\Classes\SystemFileAssociations\.${EXT}\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+!macroend
+
+!macro textlineRemoveEdit EXT
+  DeleteRegKey SHCTX "Software\Classes\SystemFileAssociations\.${EXT}\shell\Textline"
+  !insertmacro textlineDeleteIfEmpty SHCTX "Software\Classes\SystemFileAssociations\.${EXT}\shell"
+  !insertmacro textlineDeleteIfEmpty SHCTX "Software\Classes\SystemFileAssociations\.${EXT}"
+!macroend
+
+!macro customInstall
+  Push $0
+  Push $1
+  StrCpy $0 "Open with Textline"
+  StrCpy $1 "Edit with Textline"
+  ${If} $LANGUAGE == 1031
+    StrCpy $0 "Mit Textline öffnen"
+    StrCpy $1 "Mit Textline bearbeiten"
+  ${EndIf}
+  ; aufräumen, auch nach älteren Versionen: Skript-Typen, alte ProgIDs, alte Applications-Liste
+  !insertmacro textlineScripts textlineCleanScript
+  !insertmacro textlineRetiredProgIds textlineDropRetiredProgId
+  DeleteRegKey HKCU "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes"
+  DeleteRegKey HKLM "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes"
+  ; eintragen
+  !insertmacro textlineProgIds textlineAddProgId
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\DefaultIcon" "" "$INSTDIR\resources\filetypes\light\code.ico"
+  WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  !insertmacro textlineTypes textlineAddType
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "" "$0"
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\Classes\*\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  !insertmacro textlineEditTypes textlineAddEdit
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+  Pop $1
+  Pop $0
+!macroend
+
+!macro customUnInstall
+  ${ifNot} ${isUpdated}
+    !insertmacro textlineTypes textlineRemoveType
+    !insertmacro textlineScripts textlineCleanScript
+    !insertmacro textlineEditTypes textlineRemoveEdit
+    !insertmacro textlineProgIds textlineRemoveProgId
+    !insertmacro textlineRetiredProgIds textlineDropRetiredProgId
+    DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
+    DeleteRegKey SHCTX "Software\Classes\*\shell\Textline"
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+  ${endIf}
+!macroend
+'''
 os.makedirs(os.path.join(ROOT, 'build'), exist_ok=True)
 # UTF-8 mit BOM, damit NSIS die Umlaute richtig liest
-open(os.path.join(ROOT, 'build', 'installer.nsh'), 'w', encoding='utf-8-sig', newline='\r\n').write('\n'.join(L) + '\n')
+open(os.path.join(ROOT, 'build', 'installer.nsh'), 'w', encoding='utf-8-sig', newline='\r\n').write(NSH.replace('@LISTS@', LISTS))
 
 # ---------------------------------------------------------------- package.json: Symbole mitliefern, macOS-Zuordnung
 pj = os.path.join(ROOT, 'package.json')

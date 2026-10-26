@@ -258,7 +258,6 @@
         },
         {
           "ext": [
-            "js",
             "mjs",
             "cjs",
             "jsx"
@@ -361,16 +360,6 @@
         },
         {
           "ext": [
-            "bat",
-            "cmd"
-          ],
-          "name": "BAT file",
-          "role": "Editor",
-          "icon": "assets/filetypes/mac/bat.icns"
-        },
-        {
-          "ext": [
-            "ps1",
             "psm1"
           ],
           "name": "PS1 file",

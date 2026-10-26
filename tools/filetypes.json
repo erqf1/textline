@@ -7,7 +7,7 @@
     "py": { "label": "py", "color": "#3776ab", "exts": ["py", "pyw", "pyi"] },
     "html": { "label": "html", "color": "#e34c26", "exts": ["html", "htm"] },
     "css": { "label": "css", "color": "#2965f1", "exts": ["css", "scss", "sass", "less"] },
-    "js": { "label": "js", "color": "#c99700", "exts": ["js", "mjs", "cjs", "jsx"] },
+    "js": { "label": "js", "color": "#c99700", "exts": ["mjs", "cjs", "jsx"] },
     "ts": { "label": "ts", "color": "#3178c6", "exts": ["ts", "tsx"] },
     "json": { "label": "json", "color": "#16a34a", "exts": ["json", "jsonc"] },
     "xml": { "label": "xml", "color": "#ea580c", "exts": ["xml"] },
@@ -18,8 +18,7 @@
     "csv": { "label": "csv", "color": "#15803d", "exts": ["csv", "tsv"] },
     "sql": { "label": "sql", "color": "#0e7490", "exts": ["sql"] },
     "sh": { "label": "sh", "color": "#1f2937", "exts": ["sh", "bash", "zsh", "fish"] },
-    "bat": { "label": "bat", "color": "#404040", "exts": ["bat", "cmd"] },
-    "ps1": { "label": "ps1", "color": "#012456", "exts": ["ps1", "psm1"] },
+    "ps1": { "label": "ps1", "color": "#012456", "exts": ["psm1"] },
     "c": { "label": "c", "color": "#5c6bc0", "exts": ["c", "h"] },
     "cpp": { "label": "c++", "color": "#00599c", "exts": ["cpp", "cc", "cxx", "hpp", "hh"] },
     "cs": { "label": "c#", "color": "#68217a", "exts": ["cs"] },
@@ -35,5 +34,11 @@
     "diff": { "label": "diff", "color": "#9333ea", "exts": ["diff", "patch"] },
     "srt": { "label": "srt", "color": "#64748b", "exts": ["srt"] },
     "code": { "label": "</>", "color": "#f0782a", "exts": ["vue", "svelte", "pl", "r", "swift", "dart", "scala", "cmake", "gradle", "groovy", "hs", "elm", "erl", "ex", "exs", "clj", "jl", "nim", "zig", "v", "sv", "vhd", "asm", "s", "f90", "pas", "m", "mm", "vb", "fs", "ml", "proto", "graphql", "dockerfile", "nix", "tf"] }
+  },
+  "scripts": {
+    "comment": "Ausführbare Dateien und Skripte, die Windows per Doppelklick startet: NIE unter Öffnen mit eintragen, sonst zeigt Windows beim Doppelklick \"Wählen Sie eine App aus\" statt sie auszuführen. Der Installer entfernt hier alle Textline-Einträge; die Typen unter \"edit\" bekommen stattdessen \"Mit Textline bearbeiten\" im Kontextmenü (SystemFileAssociations).",
+    "never": ["bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf", "wsh", "hta", "reg", "msi", "exe", "com", "scr", "lnk"],
+    "edit": ["bat", "cmd", "ps1", "vbs", "js", "wsf", "wsh", "hta", "reg"],
+    "retiredProgIds": ["File", "bat"]
   }
 }
