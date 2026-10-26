@@ -1,0 +1,50 @@
+{
+  "name": "textline",
+  "productName": "Textline",
+  "version": "1.0.0",
+  "description": "Schneller Text- und Code-Editor mit Farben für viele Sprachen und Python zum Ausführen.",
+  "main": "src/main.js",
+  "private": true,
+  "desktopName": "win.mert.Textline",
+  "scripts": {
+    "bundle": "node build.mjs",
+    "start": "node build.mjs && electron .",
+    "build": "node build.mjs && electron-builder -wlm"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "erqf1",
+    "email": "erqf1@users.noreply.github.com"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/legacy-modes": "^6.5.5",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
+    "codemirror": "^6.0.2",
+    "electron": "^44.9.3",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "marked": "^18.1.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "iconv-lite": "^0.7.3"
+  },
+  "allowScripts": {
+    "electron@44.9.3": true,
+    "esbuild@0.28.2": true
+  }
+}
