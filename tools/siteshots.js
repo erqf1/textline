@@ -188,6 +188,10 @@ module.exports = function siteshots(win, dir, { python }) {
         await act(`window.__textline.update({ theme: 'simple', mode: 'light' })`);
         await wait(400);
         await shot(`simple-${lang}`);
+        // Minimalist (wie Notepad++), hell
+        await act(`window.__textline.update({ theme: 'minimalist', mode: 'light' })`);
+        await wait(400);
+        await shot(`minimalist-${lang}`);
         await act(`window.__textline.update({ theme: 'standard', mode: 'dark' })`);
 
         // Einstellungen: Aussehen

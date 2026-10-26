@@ -1,6 +1,6 @@
-// Designs: Farben der Oberfläche und der Syntax, jeweils hell und dunkel.
-// "standard" sieht aus wie Cutline/Clipline/Webcase, "simple" ist eckig und schlicht wie der Windows-Editor
-// (dort gibt es keine eigene Akzentfarbe, nur hell/dunkel). Alle anderen nehmen jede Akzentfarbe.
+// Designs: Farben der Oberfläche und der Syntax, jeweils hell und dunkel. Alle nehmen jede Akzentfarbe.
+// style "modern": rund, Symbolleiste (wie Cutline/Clipline/Webcase); "simple": eckig und schlicht wie der
+// Windows-Editor; "classic" (Minimalist): wie Notepad++ - Menü, Symbolreihe, kleine Tabs, graue Zeilennummern.
 
 const SYN = {
   material: {
@@ -22,6 +22,11 @@ const SYN = {
   github: {
     dark: { keyword: '#ff7b72', string: '#a5d6ff', number: '#79c0ff', comment: '#8b949e', function: '#d2a8ff', type: '#ffa657', property: '#79c0ff', tag: '#7ee787', attr: '#79c0ff', operator: '#ff7b72', constant: '#79c0ff', regexp: '#7ee787', heading: '#79c0ff', link: '#a5d6ff', meta: '#ffa657', invalid: '#f85149' },
     light: { keyword: '#cf222e', string: '#0a3069', number: '#0550ae', comment: '#6e7781', function: '#8250df', type: '#953800', property: '#0550ae', tag: '#116329', attr: '#0550ae', operator: '#cf222e', constant: '#0550ae', regexp: '#116329', heading: '#0550ae', link: '#0a3069', meta: '#953800', invalid: '#cf222e' },
+  },
+  // Notepad++ (Standard-Stil hell, "Dark Mode" dunkel)
+  npp: {
+    dark: { keyword: '#7ca8ff', string: '#c8c8c8', number: '#ff8c3a', comment: '#6aaa64', function: '#e6e6e6', type: '#4ec9b0', property: '#d4d4d4', tag: '#7ca8ff', attr: '#ff8c3a', operator: '#9fb8ff', constant: '#ff8c3a', regexp: '#d7a2ff', heading: '#7ca8ff', link: '#57a6ff', meta: '#c586c0', invalid: '#ff5555' },
+    light: { keyword: '#0000ff', string: '#808080', number: '#ff8000', comment: '#008000', function: '#000000', type: '#8000ff', property: '#000000', tag: '#0000ff', attr: '#ff0000', operator: '#000080', constant: '#ff8000', regexp: '#8000ff', heading: '#0000ff', link: '#0000ff', meta: '#804000', invalid: '#ff0000' },
   },
   vs: {
     dark: { keyword: '#569cd6', string: '#ce9178', number: '#b5cea8', comment: '#6a9955', function: '#dcdcaa', type: '#4ec9b0', property: '#9cdcfe', tag: '#569cd6', attr: '#9cdcfe', operator: '#d4d4d4', constant: '#4fc1ff', regexp: '#d16969', heading: '#569cd6', link: '#3794ff', meta: '#c586c0', invalid: '#f44747' },
@@ -57,7 +62,12 @@ export const THEMES = [
     light: { bg: '#ffffff', panel: '#f6f6f6', panel2: '#ececec', line: '#dadada', text: '#161616', muted: '#6b6b6b' },
   },
   {
-    id: 'simple', accent: null, syntax: 'vs', simple: true,
+    id: 'minimalist', accent: '#fa9600', syntax: 'npp', style: 'classic',
+    dark: { bg: '#1e1e1e', panel: '#2d2d30', panel2: '#3a3a3e', line: '#4a4a4f', text: '#e0e0e0', muted: '#a8a8a8', gutter: '#252526', gutterText: '#8a8a8a', activeLine: '#2a2d3e' },
+    light: { bg: '#ffffff', panel: '#f0f0f0', panel2: '#e5e5e5', line: '#a9a9a9', text: '#000000', muted: '#505050', gutter: '#e4e4e4', gutterText: '#808080', activeLine: '#e8e8ff' },
+  },
+  {
+    id: 'simple', accent: null, syntax: 'vs', style: 'simple',
     dark: { bg: '#1e1e1e', panel: '#2b2b2b', panel2: '#333333', line: '#454545', text: '#d4d4d4', muted: '#9d9d9d', accent: '#3794ff', selection: '#264f78' },
     light: { bg: '#ffffff', panel: '#f3f3f3', panel2: '#e8e8e8', line: '#d0d0d0', text: '#000000', muted: '#5f5f5f', accent: '#0067c0', selection: '#add6ff' },
   },
@@ -94,9 +104,11 @@ export function applyTheme(settings, systemDark) {
   const dark = settings.mode === 'dark' || (settings.mode !== 'light' && systemDark);
   const ui = dark ? theme.dark : theme.light;
   const syn = SYN[theme.syntax][dark ? 'dark' : 'light'];
-  let accent = theme.simple ? ui.accent : settings.accent || theme.accent;
+  const style = theme.style || 'modern';
+  const custom = !!settings.accent;
+  let accent = settings.accent || theme.accent || ui.accent;
   // Neutrale Akzente (fast weiß/schwarz) im jeweils anderen Modus lesbar machen
-  if (!theme.simple && !dark && luminance(accent) > 0.75) accent = mix(accent, '#000000', 0.45);
+  if (!dark && luminance(accent) > 0.75) accent = mix(accent, '#000000', 0.45);
   const vars = {
     '--bg': ui.bg,
     '--panel': ui.panel,
@@ -107,19 +119,25 @@ export function applyTheme(settings, systemDark) {
     '--accent': accent,
     '--accent-text': luminance(accent) > 0.45 ? '#111111' : '#ffffff',
     '--accent-soft': alpha(accent, dark ? 0.16 : 0.12),
-    '--selection': theme.simple ? ui.selection : alpha(accent, dark ? 0.3 : 0.24),
+    '--selection': ui.selection && !custom ? ui.selection : alpha(accent, dark ? 0.3 : 0.24),
     '--selection-match': alpha(accent, dark ? 0.16 : 0.14),
     '--hover': dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-    '--active-line': dark ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.035)',
-    '--gutter-text': mix(ui.muted, ui.bg, 0.35),
+    '--active-line': ui.activeLine || (dark ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.035)'),
+    '--gutter-bg': ui.gutter || ui.bg,
+    '--gutter-text': ui.gutterText || mix(ui.muted, ui.bg, 0.35),
     '--shadow': dark ? '0 18px 48px rgba(0,0,0,0.55)' : '0 18px 44px rgba(20,25,40,0.18)',
     '--danger': dark ? '#ff6b6b' : '#d92d2d',
     '--ok': dark ? '#4ade80' : '#15803d',
   };
   for (const [k, v] of Object.entries(syn)) vars[`--syn-${k}`] = v;
+  // Notepad++: Schlüsselwörter und Operatoren fett, Kommentare nicht kursiv
+  const npp = theme.syntax === 'npp';
+  vars['--syn-keyword-weight'] = npp ? 'bold' : 'normal';
+  vars['--syn-operator-weight'] = npp ? 'bold' : 'normal';
+  vars['--syn-comment-style'] = npp ? 'normal' : 'italic';
   const root = document.documentElement;
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
-  root.dataset.style = theme.simple ? 'simple' : 'modern';
+  root.dataset.style = style;
   root.dataset.mode = dark ? 'dark' : 'light';
   root.style.colorScheme = dark ? 'dark' : 'light';
   return { theme, dark, accent };
@@ -130,7 +148,7 @@ export function previewColors(themeId, dark, accent) {
   const theme = themeById(themeId);
   const ui = dark ? theme.dark : theme.light;
   const syn = SYN[theme.syntax][dark ? 'dark' : 'light'];
-  return { ...ui, accent: theme.simple ? ui.accent : accent || theme.accent, syn };
+  return { ...ui, accent: accent || theme.accent || ui.accent, syn, style: theme.style || 'modern' };
 }
 
 /** Licht-Farben für den Ausdruck (Papier ist weiß) */

@@ -95,6 +95,16 @@
             "x64"
           ]
         }
+      ],
+      "extraResources": [
+        {
+          "from": "assets/filetypes",
+          "to": "filetypes",
+          "filter": [
+            "light/*.ico",
+            "dark/*.ico"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -195,33 +205,29 @@
         {
           "ext": [
             "txt",
-            "text",
-            "log",
+            "text"
+          ],
+          "name": "TXT file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/txt.icns"
+        },
+        {
+          "ext": [
+            "log"
+          ],
+          "name": "LOG file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/log.icns"
+        },
+        {
+          "ext": [
             "md",
             "markdown",
-            "rst",
-            "csv",
-            "tsv",
-            "ini",
-            "cfg",
-            "conf",
-            "toml",
-            "yaml",
-            "yml",
-            "json",
-            "jsonc",
-            "xml",
-            "properties",
-            "env",
-            "gitignore",
-            "editorconfig",
-            "diff",
-            "patch",
-            "srt",
-            "tex"
+            "rst"
           ],
-          "name": "Text",
-          "role": "Editor"
+          "name": "MD file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/md.icns"
         },
         {
           "ext": [
@@ -229,55 +235,279 @@
             "pyw",
             "pyi"
           ],
-          "name": "Python",
-          "role": "Editor"
+          "name": "PY file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/py.icns"
         },
         {
           "ext": [
             "html",
-            "htm",
+            "htm"
+          ],
+          "name": "HTML file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/html.icns"
+        },
+        {
+          "ext": [
             "css",
             "scss",
             "sass",
-            "less",
+            "less"
+          ],
+          "name": "CSS file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/css.icns"
+        },
+        {
+          "ext": [
             "js",
             "mjs",
             "cjs",
-            "jsx",
+            "jsx"
+          ],
+          "name": "JS file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/js.icns"
+        },
+        {
+          "ext": [
             "ts",
-            "tsx",
-            "vue",
-            "svelte",
+            "tsx"
+          ],
+          "name": "TS file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/ts.icns"
+        },
+        {
+          "ext": [
+            "json",
+            "jsonc"
+          ],
+          "name": "JSON file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/json.icns"
+        },
+        {
+          "ext": [
+            "xml"
+          ],
+          "name": "XML file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/xml.icns"
+        },
+        {
+          "ext": [
+            "yaml",
+            "yml"
+          ],
+          "name": "YML file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/yaml.icns"
+        },
+        {
+          "ext": [
+            "ini"
+          ],
+          "name": "INI file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/ini.icns"
+        },
+        {
+          "ext": [
+            "toml"
+          ],
+          "name": "TOML file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/toml.icns"
+        },
+        {
+          "ext": [
+            "cfg",
+            "conf",
+            "properties",
+            "env",
+            "gitignore",
+            "editorconfig"
+          ],
+          "name": "CFG file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/config.icns"
+        },
+        {
+          "ext": [
+            "csv",
+            "tsv"
+          ],
+          "name": "CSV file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/csv.icns"
+        },
+        {
+          "ext": [
+            "sql"
+          ],
+          "name": "SQL file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/sql.icns"
+        },
+        {
+          "ext": [
+            "sh",
+            "bash",
+            "zsh",
+            "fish"
+          ],
+          "name": "SH file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/sh.icns"
+        },
+        {
+          "ext": [
+            "bat",
+            "cmd"
+          ],
+          "name": "BAT file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/bat.icns"
+        },
+        {
+          "ext": [
+            "ps1",
+            "psm1"
+          ],
+          "name": "PS1 file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/ps1.icns"
+        },
+        {
+          "ext": [
             "c",
-            "h",
+            "h"
+          ],
+          "name": "C file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/c.icns"
+        },
+        {
+          "ext": [
             "cpp",
             "cc",
             "cxx",
             "hpp",
-            "hh",
-            "cs",
-            "java",
+            "hh"
+          ],
+          "name": "C++ file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/cpp.icns"
+        },
+        {
+          "ext": [
+            "cs"
+          ],
+          "name": "C# file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/cs.icns"
+        },
+        {
+          "ext": [
+            "java"
+          ],
+          "name": "JAVA file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/java.icns"
+        },
+        {
+          "ext": [
             "kt",
-            "kts",
-            "go",
-            "rs",
-            "rb",
-            "php",
-            "lua",
+            "kts"
+          ],
+          "name": "KT file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/kt.icns"
+        },
+        {
+          "ext": [
+            "go"
+          ],
+          "name": "GO file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/go.icns"
+        },
+        {
+          "ext": [
+            "rs"
+          ],
+          "name": "RS file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/rs.icns"
+        },
+        {
+          "ext": [
+            "rb"
+          ],
+          "name": "RB file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/rb.icns"
+        },
+        {
+          "ext": [
+            "php"
+          ],
+          "name": "PHP file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/php.icns"
+        },
+        {
+          "ext": [
+            "lua"
+          ],
+          "name": "LUA file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/lua.icns"
+        },
+        {
+          "ext": [
+            "svg"
+          ],
+          "name": "SVG file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/svg.icns"
+        },
+        {
+          "ext": [
+            "tex"
+          ],
+          "name": "TEX file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/tex.icns"
+        },
+        {
+          "ext": [
+            "diff",
+            "patch"
+          ],
+          "name": "DIFF file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/diff.icns"
+        },
+        {
+          "ext": [
+            "srt"
+          ],
+          "name": "SRT file",
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/srt.icns"
+        },
+        {
+          "ext": [
+            "vue",
+            "svelte",
             "pl",
             "r",
             "swift",
             "dart",
             "scala",
-            "sql",
-            "sh",
-            "bash",
-            "zsh",
-            "fish",
-            "ps1",
-            "psm1",
-            "bat",
-            "cmd",
             "cmake",
             "gradle",
             "groovy",
@@ -302,7 +532,6 @@
             "vb",
             "fs",
             "ml",
-            "svg",
             "proto",
             "graphql",
             "dockerfile",
@@ -310,7 +539,8 @@
             "tf"
           ],
           "name": "Source code",
-          "role": "Editor"
+          "role": "Editor",
+          "icon": "assets/filetypes/mac/code.icns"
         }
       ],
       "target": [

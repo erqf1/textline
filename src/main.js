@@ -7,6 +7,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const files = require('./files');
+const fileIcons = require('./fileicons');
 const { Python } = require('./python');
 const { t: tr } = require('./shared/i18n');
 
@@ -159,10 +160,23 @@ function buildMenu() {
 // ---------------------------------------------------------------- IPC: Einstellungen und Sitzung
 ipcMain.handle('settings:get', () => settings);
 ipcMain.handle('settings:set', (_e, next) => {
-  settings = { ...next, window: settings.window };
+  const iconsBefore = settings.fileIcons;
+  settings = { ...next, window: settings.window, fileIconsApplied: settings.fileIconsApplied };
   writeJson(userFile('settings.json'), settings);
+  if (settings.fileIcons !== iconsBefore) syncFileIcons(true);
   return true;
 });
+// Dateisymbole im Explorer (Windows, installierte Version): hell, dunkel oder wie Windows
+function syncFileIcons(force) {
+  const save = (patch) => {
+    settings = { ...settings, ...patch };
+    writeJson(userFile('settings.json'), settings);
+  };
+  if (force) {
+    const want = fileIcons.resolve(settings.fileIcons || 'auto');
+    fileIcons.apply(want).then((ok) => ok && save({ fileIconsApplied: want }));
+  } else fileIcons.sync(settings, save);
+}
 ipcMain.handle('session:get', () => readJson(userFile('session.json'), null));
 ipcMain.handle('session:set', (_e, data) => {
   writeJson(userFile('session.json'), data);
@@ -179,6 +193,7 @@ ipcMain.handle('app:info', () => ({
   home: os.homedir(),
   dark: nativeTheme.shouldUseDarkColors,
   selfTest: !!selfTest,
+  fileIcons: fileIcons.available(),
 }));
 ipcMain.handle('app:close-now', () => {
   closingAllowed = true;
@@ -190,6 +205,7 @@ ipcMain.handle('app:set-title', (_e, title) => {
 });
 nativeTheme.on('updated', () => {
   if (win) win.webContents.send('app:system-theme', nativeTheme.shouldUseDarkColors);
+  if ((settings.fileIcons || 'auto') === 'auto' && fileIcons.resolve('auto') !== (settings.fileIconsApplied || 'light')) syncFileIcons(true);
 });
 
 // ---------------------------------------------------------------- IPC: Dateien
@@ -439,6 +455,7 @@ app.whenReady().then(() => {
   buildMenu();
   createWindow();
   setupAutoUpdate();
+  if (!selfTest) setTimeout(() => syncFileIcons(false), 3000);
   if (selfTest) require(path.join(__dirname, '..', 'tools', testArg === '--siteshots' ? 'siteshots.js' : 'selftest.js'))(win, selfTest, { python });
 });
 

@@ -20,15 +20,15 @@ import { tags as t, highlightTree } from '@lezer/highlight';
 // ---------------------------------------------------------------- Farben (über CSS-Variablen aus dem Design)
 const v = (name) => `var(--syn-${name})`;
 export const highlight = HighlightStyle.define([
-  { tag: [t.keyword, t.controlKeyword, t.moduleKeyword, t.operatorKeyword, t.definitionKeyword, t.modifier], color: v('keyword') },
+  { tag: [t.keyword, t.controlKeyword, t.moduleKeyword, t.operatorKeyword, t.definitionKeyword, t.modifier], color: v('keyword'), fontWeight: 'var(--syn-keyword-weight, normal)' },
   { tag: [t.string, t.special(t.string), t.character, t.docString, t.attributeValue], color: v('string') },
   { tag: [t.number, t.integer, t.float, t.bool, t.null, t.atom, t.unit], color: v('number') },
-  { tag: [t.comment, t.lineComment, t.blockComment, t.docComment], color: v('comment'), fontStyle: 'italic' },
+  { tag: [t.comment, t.lineComment, t.blockComment, t.docComment], color: v('comment'), fontStyle: 'var(--syn-comment-style, italic)' },
   { tag: [t.function(t.variableName), t.function(t.propertyName), t.function(t.definition(t.variableName)), t.macroName], color: v('function') },
   { tag: [t.typeName, t.className, t.namespace, t.definition(t.typeName), t.definition(t.className)], color: v('type') },
   { tag: [t.propertyName, t.attributeName, t.definition(t.propertyName)], color: v('property') },
   { tag: [t.tagName, t.angleBracket], color: v('tag') },
-  { tag: [t.operator, t.derefOperator, t.arithmeticOperator, t.logicOperator, t.bitwiseOperator, t.compareOperator, t.updateOperator], color: v('operator') },
+  { tag: [t.operator, t.derefOperator, t.arithmeticOperator, t.logicOperator, t.bitwiseOperator, t.compareOperator, t.updateOperator], color: v('operator'), fontWeight: 'var(--syn-operator-weight, normal)' },
   { tag: [t.constant(t.variableName), t.standard(t.variableName), t.self, t.special(t.variableName)], color: v('constant') },
   { tag: [t.regexp, t.escape, t.special(t.brace)], color: v('regexp') },
   { tag: [t.heading, t.heading1, t.heading2, t.heading3], color: v('heading'), fontWeight: 'bold' },
@@ -47,12 +47,12 @@ export const highlight = HighlightStyle.define([
 const theme = EditorView.theme({
   '&': { height: '100%', color: 'var(--text)', backgroundColor: 'var(--bg)', fontSize: 'var(--editor-size)' },
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { fontFamily: 'var(--editor-font)', lineHeight: '1.6' },
+  '.cm-scroller': { fontFamily: 'var(--editor-font)', lineHeight: 'var(--editor-line, 1.6)' },
   '.cm-content': { caretColor: 'var(--accent)', padding: '8px 0 40vh' },
   '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--accent)', borderLeftWidth: '2px' },
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'var(--selection) !important' },
   '.cm-activeLine': { backgroundColor: 'var(--active-line)' },
-  '.cm-gutters': { backgroundColor: 'var(--bg)', color: 'var(--gutter-text)', border: 'none' },
+  '.cm-gutters': { backgroundColor: 'var(--gutter-bg)', color: 'var(--gutter-text)', border: 'none' },
   '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--text)' },
   '.cm-lineNumbers .cm-gutterElement': { padding: '0 8px 0 16px', minWidth: '28px' },
   '.cm-foldGutter .cm-gutterElement': { padding: '0 4px', color: 'var(--gutter-text)', cursor: 'pointer' },

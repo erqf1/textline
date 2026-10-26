@@ -14,7 +14,7 @@ export const FONTS = [
   ['"Courier New", monospace', 'Courier New'],
 ];
 
-export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, page = 'general' }) {
+export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, canFileIcons, page = 'general' }) {
   const tabs = [
     ['general', T('setGeneral')],
     ['look', T('setLook')],
@@ -64,16 +64,15 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
     look() {
       const grid = h('div', { class: 'theme-grid' });
       const accentRow = h('div', { class: 'accent-row' });
-      const accentNote = h('small', { class: 'muted accent-note', text: T('setAccentSimple') });
       const paintThemes = () => {
         grid.textContent = '';
         const dark = S.mode === 'dark' || (S.mode !== 'light' && systemDark());
         for (const th of THEMES) {
-          const c = previewColors(th.id, dark, th.simple ? null : S.accent);
-          const card = h('button', { class: `theme-card${S.theme === th.id ? ' on' : ''}${th.simple ? ' simple' : ''}` },
+          const c = previewColors(th.id, dark, S.accent);
+          const card = h('button', { class: `theme-card ${c.style}${S.theme === th.id ? ' on' : ''}` },
             h('div', { class: 'theme-mini', style: { background: c.bg, borderColor: c.line } },
               h('div', { class: 'mini-bar', style: { background: c.panel } }, h('i', { style: { background: c.accent } })),
-              h('div', { class: 'mini-code' },
+              h('div', { class: 'mini-code', style: c.gutter ? { borderLeft: `14px solid ${c.gutter}`, paddingLeft: '6px' } : {} },
                 h('span', { style: { color: c.syn.keyword }, text: 'def ' }), h('span', { style: { color: c.syn.function }, text: 'main' }), h('span', { style: { color: c.text }, text: '():' }), h('br'),
                 h('span', { style: { color: c.syn.comment }, text: '  # Textline' }), h('br'),
                 h('span', { style: { color: c.syn.string }, text: '  "Hi!"' }))),
@@ -88,9 +87,6 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       };
       const paintAccents = () => {
         accentRow.textContent = '';
-        const simple = S.theme === 'simple';
-        accentRow.classList.toggle('disabled', simple);
-        accentNote.style.display = simple ? '' : 'none';
         const cur = (S.accent || '').toLowerCase();
         const auto = h('button', { class: `swatch auto${!cur ? ' on' : ''}`, title: T('setAccentAuto'), text: 'A' });
         auto.addEventListener('click', () => {
@@ -125,7 +121,12 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       return [
         section(T('setTheme'), grid),
         section(T('setMode'), segmented('mode', [['system', T('modeSystem')], ['light', T('modeLight')], ['dark', T('modeDark')]], paintThemes)),
-        section(T('setAccent'), accentRow, accentNote),
+        section(T('setAccent'), accentRow),
+        section(T('setMenuBar'), check('menuBar', T('setMenuBarShow'), T('setMenuBarHint'))),
+        // Nur in der installierten Windows-Version: Dateisymbole im Explorer hell oder dunkel
+        canFileIcons ? section(T('setFileIcons'),
+          segmented('fileIcons', [['auto', T('fileIconsAuto')], ['light', T('modeLight')], ['dark', T('modeDark')]]),
+          h('small', { class: 'muted', text: T('setFileIconsHint') })) : null,
         section(T('setFont'),
           select('fontFamily', T('setFontFamily'), FONTS.map(([v, n]) => [v, v ? n : T('fontDefault')])),
           h('label', { class: 'set-row' }, h('span', { text: T('setFontSize') }), size)),
@@ -194,7 +195,7 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
   const show = (id) => {
     nav.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
     pane.textContent = '';
-    pane.append(...pages[id]());
+    pane.append(...pages[id]().filter(Boolean));
     pane.scrollTop = 0;
   };
   for (const [id, label] of tabs) nav.append(h('button', { 'data-id': id, text: label, onclick: () => show(id) }));

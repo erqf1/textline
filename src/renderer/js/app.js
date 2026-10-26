@@ -20,9 +20,12 @@ const DEFAULTS = {
   tabSize: 4, useTabs: false, detectIndent: true, wrap: false, lineNumbers: true, activeLine: true, whitespace: false,
   closeBrackets: true, autocomplete: true, restoreSession: true, trimTrailing: false, finalNewline: false,
   newEol: 'auto', newEncoding: 'utf8', pythonMode: 'env', pythonPath: '', saveBeforeRun: true, clearConsoleOnRun: true,
-  pythonCheck: true, recent: [], consoleHeight: 220, previewWidth: 44, consoleOpen: false,
+  pythonCheck: true, recent: [], consoleHeight: 220, previewWidth: 44, consoleOpen: false, menuBar: true, fileIcons: 'auto',
 };
 const DEFAULT_FONT = '"Cascadia Mono", "Cascadia Code", Consolas, "JetBrains Mono", "SF Mono", Menlo, "DejaVu Sans Mono", "Liberation Mono", monospace';
+// Minimalist (wie Notepad++): Courier New, solange keine eigene Schrift gewählt ist
+const CLASSIC_FONT = '"Courier New", Courier, "Liberation Mono", monospace';
+const lookStyle = () => themeById(S.theme).style || 'modern';
 
 let S = { ...DEFAULTS };
 let INFO = { platform: 'win32' };
@@ -51,7 +54,8 @@ function update(patch) {
   saveSettings();
   const relabelNeeded = 'language' in patch && patch.language !== before.language;
   if (['theme', 'mode', 'accent'].some((k) => k in patch)) applyLook();
-  if ('fontFamily' in patch || 'fontSize' in patch) applyFont();
+  if ('fontFamily' in patch || 'fontSize' in patch || 'theme' in patch) applyFont();
+  if ('menuBar' in patch) applyMenuBar();
   const editorKeys = ['wrap', 'lineNumbers', 'activeLine', 'whitespace', 'closeBrackets', 'autocomplete', 'pythonCheck'];
   if (editorKeys.some((k) => k in patch)) reconfigureAll();
   if ('tabSize' in patch || 'useTabs' in patch) {
@@ -74,9 +78,12 @@ function applyLook() {
   if (previewApi) previewApi.reset();
   updatePreview();
 }
+function applyMenuBar() {
+  document.documentElement.dataset.menubar = S.menuBar ? '1' : '0';
+}
 function applyFont() {
   const root = document.documentElement.style;
-  root.setProperty('--editor-font', S.fontFamily || DEFAULT_FONT);
+  root.setProperty('--editor-font', S.fontFamily || (lookStyle() === 'classic' ? CLASSIC_FONT : DEFAULT_FONT));
   root.setProperty('--editor-size', `${S.fontSize}px`);
   if (view) view.requestMeasure();
 }
@@ -155,6 +162,7 @@ function makeListener() {
       if (dirty !== active.dirty) {
         active.dirty = dirty;
         renderTabs();
+        renderClassicBar();
         updateTitle();
       }
       scheduleSession();
@@ -1046,7 +1054,8 @@ function menus() {
       '-', item('goToLine'), { ...item('matchBracket'), shortcut: keyLabel('Mod+Shift+\\', MAC) },
     ] },
     { id: 'view', label: T('menuView'), items: [
-      item('wrap', { checked: S.wrap }), item('lineNumbers', { checked: S.lineNumbers }), item('whitespace', { checked: S.whitespace }), item('activeLine', { checked: S.activeLine }),
+      { label: T('menuBarItem'), checked: S.menuBar, run: () => update({ menuBar: !S.menuBar }) },
+      '-', item('wrap', { checked: S.wrap }), item('lineNumbers', { checked: S.lineNumbers }), item('whitespace', { checked: S.whitespace }), item('activeLine', { checked: S.activeLine }),
       '-', item('preview', { checked: previewOpen && !!kindOf(active), disabled: !kindOf(active) }), item('console', { checked: !$('#console').classList.contains('hidden') }),
       '-', item('zoomIn'), item('zoomOut'), item('zoomReset'),
       '-', item('foldAll'), item('unfoldAll'),
@@ -1065,7 +1074,7 @@ function menus() {
 
 function settingsDialog(page) {
   openSettings({
-    S, update, T, api, page, systemDark: () => systemDark,
+    S, update, T, api, page, systemDark: () => systemDark, canFileIcons: !!INFO.fileIcons,
     languages: i18n.LANGS.map(([code, name]) => [code, name]),
     openPackages: () => CMD.packages.run(),
     pythonInfo: async () => {
@@ -1154,6 +1163,7 @@ function renderTabs() {
   host.textContent = '';
   for (const tb of tabs) {
     const el = h('div', { class: `tab${tb === active ? ' active' : ''}${tb.dirty ? ' dirty' : ''}`, title: tb.path || tabTitle(tb), draggable: 'true' },
+      h('span', { class: 'tab-ico', html: icon('save', 14) }),
       h('span', { class: 'tab-name', text: tabTitle(tb) }),
       h('button', { class: 'tab-close', html: icon('x', 13), title: T('closeTab') }));
     el.addEventListener('mousedown', (e) => {
@@ -1205,7 +1215,40 @@ function renderTabs() {
   }
 }
 
+// Minimalist: Symbolreihe wie in Notepad++ (Datei | Bearbeiten | Suchen | Ansicht | Ausführen)
+function renderClassicBar() {
+  const bar = $('#classicbar');
+  bar.textContent = '';
+  if (lookStyle() !== 'classic') return;
+  const running = consoleApi && consoleApi.isRunning();
+  const groups = [
+    [['file', 'newFile'], ['open', 'open'], ['save', 'save', noTab()], ['saveAll', 'saveAll', !tabs.some((t) => t.dirty)], ['closeTab', 'closeTab', noTab()], ['closeAll', 'closeAll', !tabs.length], ['print', 'print', noTab()]],
+    [['cut', 'cut', noTab()], ['copy', 'copy', noTab()], ['paste', 'paste', noTab()]],
+    [['undo', 'undo', noTab()], ['redo', 'redo', noTab()]],
+    [['search', 'find', noTab()], ['replace', 'replace', noTab()]],
+    [['zoomIn', 'zoomIn'], ['zoomOut', 'zoomOut']],
+    [['wrap', 'wrap', false, S.wrap], ['pilcrow', 'whitespace', false, S.whitespace], ['lineNumbers', 'lineNumbers', false, S.lineNumbers]],
+    [
+      ...(isPython(active) ? [running ? ['stop', 'stop', false, false, 'danger'] : ['run', 'run', false, false, 'run'], ['box', 'packages']] : []),
+      ...(kindOf(active) ? [['eye', 'preview', false, previewOpen]] : []),
+      ['terminal', 'console', false, !$('#console').classList.contains('hidden')],
+    ],
+  ];
+  groups.filter((g) => g.length).forEach((g, gi) => {
+    if (gi) bar.append(h('span', { class: 'cb-sep' }));
+    for (const [ic, id, disabled = false, on = false, cls = ''] of g) {
+      const c = CMD[id];
+      const keys = c.keys ? ` (${keyLabel(c.keys, MAC)})` : '';
+      const b = h('button', { class: `cb-btn ${cls}${on ? ' on' : ''}`, html: icon(ic, 16), title: `${T(c.label)}${keys}`, disabled });
+      b.addEventListener('mousedown', (e) => e.preventDefault());  // Fokus bleibt im Editor (Ausschneiden/Kopieren)
+      b.addEventListener('click', () => c.run());
+      bar.append(b);
+    }
+  });
+}
+
 function renderToolbar() {
+  renderClassicBar();
   const bar = $('#toolbar');
   bar.textContent = '';
   const btn = (name, title, run, cls = '', disabled = false) => {
@@ -1248,6 +1291,20 @@ function renderStatus() {
   const head = st.selection.main.head;
   const line = st.doc.lineAt(head);
   const col = head - line.from + 1;
+  if (lookStyle() === 'classic') {
+    const sel = st.selection.ranges.reduce((n, r) => n + r.to - r.from, 0);
+    const selLines = st.selection.ranges.reduce((n, r) => n + (r.empty ? 0 : st.doc.lineAt(r.to).number - st.doc.lineAt(r.from).number + 1), 0);
+    const nf = new Intl.NumberFormat(document.documentElement.lang || 'en');
+    item(active.lang ? T('nppFile', { lang: displayName(active.lang) }) : T('nppNormalText'), T('chooseLanguage'), languagePicker, 'grow');
+    item(T('nppLength', { n: nf.format(st.doc.length), lines: nf.format(st.doc.lines) }), '');
+    item(T('nppPos', { line: line.number, col, sel: nf.format(sel), lines: selLines }), T('goToLine'), goToLineDialog);
+    if (isPython(active) && pyInfo && pyInfo.version) item(`Python ${pyInfo.version}`, T('pyInterpreter'), () => settingsDialog('python'));
+    item(active.useTabs ? T('tabsN', { n: active.tabSize }) : T('spacesN', { n: active.tabSize }), T('indentWith'), indentMenu);
+    item(active.eol === 'crlf' ? 'Windows (CR LF)' : 'Unix (LF)', T('lineEndings'), eolMenu);
+    item(encLabel(active), T('encoding'), encodingMenu);
+    item(active.readOnly ? T('readOnly') : 'INS', '');
+    return;
+  }
   item(T('position', { line: line.number, col }), T('goToLine'), goToLineDialog);
   const selected = st.selection.ranges.reduce((n, r) => n + r.to - r.from, 0);
   if (st.selection.ranges.length > 1) item(T('cursors', { n: st.selection.ranges.length }), '');
@@ -1329,6 +1386,7 @@ async function main() {
   document.documentElement.lang = S.language || i18n.guess(navigator.language);
   applyTheme(S, systemDark);
   applyFont();
+  applyMenuBar();
   buildKeymap();
 
   $('#main-menu').innerHTML = icon('menu');

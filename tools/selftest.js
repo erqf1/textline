@@ -146,12 +146,30 @@ module.exports = function selftest(win, dir, { python }) {
       const langName = await js('window.__textline.active.lang && window.__textline.active.lang.name');
       check('beispiel.py detected as Python', langName === 'Python', String(langName));
       await act(`window.__textline.update({ language: 'en' })`);
-      for (const theme of ['standard', 'ocean', 'forest', 'sunset', 'graphite', 'simple']) {
+      for (const theme of ['standard', 'ocean', 'forest', 'sunset', 'graphite', 'simple', 'minimalist']) {
         for (const mode of ['dark', 'light']) {
           await act(`window.__textline.update({ theme: '${theme}', mode: '${mode}' })`);
           await shot(`theme-${theme}-${mode}`);
         }
       }
+      // Jedes Design nimmt eine eigene Akzentfarbe (auch Simple und Minimalist)
+      for (const theme of ['simple', 'minimalist']) {
+        await act(`window.__textline.update({ theme: '${theme}', mode: 'light', accent: '#ff4d6d' })`);
+        const acc = await js(`getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()`);
+        check(`${theme} takes a custom accent color`, acc === '#ff4d6d', acc);
+        await shot(`accent-${theme}`);
+      }
+      await act(`window.__textline.update({ accent: '' })`);
+      // Menüleiste: in jedem Design an (Standard), abschaltbar
+      await act(`window.__textline.update({ theme: 'standard', mode: 'dark' })`);
+      check('menu bar is shown by default', await js(`getComputedStyle(document.querySelector('#menubar')).display === 'flex'`));
+      await act(`window.__textline.update({ menuBar: false })`);
+      check('menu bar can be switched off', await js(`getComputedStyle(document.querySelector('#menubar')).display === 'none' && getComputedStyle(document.querySelector('#main-menu')).display !== 'none'`));
+      await shot('standard-no-menubar');
+      await act(`window.__textline.update({ theme: 'minimalist' })`);
+      await shot('minimalist-no-menubar');
+      await act(`window.__textline.update({ menuBar: true, theme: 'minimalist', mode: 'light' })`);
+      check('Minimalist shows the Notepad++ toolbar', await js(`document.querySelectorAll('#classicbar .cb-btn').length > 15`));
       await act(`window.__textline.update({ theme: 'standard', mode: 'dark', accent: '#4aa3ff' })`);
       await shot('accent-blue');
       await act(`window.__textline.update({ accent: '' })`);
