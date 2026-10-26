@@ -8,11 +8,11 @@ Schneller Text- und Code-Editor für Windows, Linux und macOS. Farben für über
 
 | System | Optionen |
 | --- | --- |
-| Windows | **Installer** (`Textline-Setup-*.exe`, trägt Textline bei „Öffnen mit“ für Text- und Code-Dateien ein und fügt „Mit Textline öffnen“ ins Kontextmenü; Skripte wie `.bat` bekommen nur „Mit Textline bearbeiten“) oder **portabel** (`Textline-*-portable.exe`, keine Installation) |
+| Windows | **Installer** (`Textline-Setup-*.exe`, trägt Textline bei „Öffnen mit“ für Text- und Code-Dateien ein und fügt „Mit Textline öffnen“ ins Kontextmenü; Skripte wie `.bat` bekommen „Mit Textline bearbeiten“) oder **portabel** (`Textline-*-portable.exe`, keine Installation) |
 | Linux | `.deb` (Debian/Ubuntu), `.pacman` (Arch) oder `.tar.gz` (portabel, jede Distribution) |
 | macOS | `.zip` für Apple Silicon oder Intel (App-Bundle, immer portabel) |
 
-Der Installer stellt **keine Standard-Programme** um und fasst den Standardwert einer Endung nie an: `.py`-Dateien laufen per Doppelklick weiter wie gewohnt. Ausführbare Dateien und Skripte (`.bat`, `.cmd`, `.ps1`, `.js`, `.vbs`, `.reg` …) trägt er gar nicht unter „Öffnen mit“ ein – sie starten weiter per Doppelklick und haben nur „Mit Textline bearbeiten“ im Rechtsklick-Menü. Welche Typen das sind, steht in `tools/filetypes.json` (`scripts`). Wer Textline als Standard will, wählt es einmal unter „Öffnen mit“ → „Immer“.
+Der Installer stellt **keine Standard-Programme** um und fasst den Standardwert einer Endung nie an: `.py`-Dateien laufen per Doppelklick weiter wie gewohnt. Ausführbare Dateien und Skripte (`.bat`, `.cmd`, `.ps1`, `.js`, `.vbs`, `.reg` …) trägt er nicht als neue App ein (sonst fragt Windows beim Doppelklick nach einer App, statt sie auszuführen) – sie starten weiter per Doppelklick. Textline steht dort als zuletzt benutzte App unter „Öffnen mit“ und als „Mit Textline bearbeiten“ im Rechtsklick-Menü. Welche Typen das sind, steht in `tools/filetypes.json` (`scripts`). Wer Textline als Standard will, wählt es einmal unter „Öffnen mit“ → „Immer“.
 
 ### Linux
 

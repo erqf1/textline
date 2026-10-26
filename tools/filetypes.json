@@ -36,7 +36,7 @@
     "code": { "label": "</>", "color": "#f0782a", "exts": ["vue", "svelte", "pl", "r", "swift", "dart", "scala", "cmake", "gradle", "groovy", "hs", "elm", "erl", "ex", "exs", "clj", "jl", "nim", "zig", "v", "sv", "vhd", "asm", "s", "f90", "pas", "m", "mm", "vb", "fs", "ml", "proto", "graphql", "dockerfile", "nix", "tf"] }
   },
   "scripts": {
-    "comment": "Ausführbare Dateien und Skripte, die Windows per Doppelklick startet: NIE unter Öffnen mit eintragen, sonst zeigt Windows beim Doppelklick \"Wählen Sie eine App aus\" statt sie auszuführen. Der Installer entfernt hier alle Textline-Einträge; die Typen unter \"edit\" bekommen stattdessen \"Mit Textline bearbeiten\" im Kontextmenü (SystemFileAssociations).",
+    "comment": "Ausführbare Dateien und Skripte, die Windows per Doppelklick startet: NIE als OpenWithProgids eintragen, sonst zeigt Windows beim nächsten Doppelklick \"Wählen Sie eine App aus\" statt sie auszuführen. Der Installer entfernt dort alle Textline-Einträge. Die Typen unter \"edit\" bekommen \"Mit Textline bearbeiten\" im Kontextmenü und stehen unter \"Öffnen mit\" als zuletzt benutzte App (Explorer-Liste FileExts/.endung/OpenWithList, so wie nachdem man einmal \"Öffnen mit -> Textline\" gewählt hat).",
     "never": ["bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf", "wsh", "hta", "reg", "msi", "exe", "com", "scr", "lnk"],
     "edit": ["bat", "cmd", "ps1", "vbs", "js", "wsf", "wsh", "hta", "reg"],
     "retiredProgIds": ["File", "bat"]

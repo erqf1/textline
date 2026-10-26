@@ -241,8 +241,9 @@ LISTS = '\n\n'.join([
 NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - nicht von Hand ändern.
 ; Windows: Textline unter "Öffnen mit" für Text- und Code-Dateien (je Typ eine ProgID mit eigenem Dateisymbol) und
 ; "Mit Textline öffnen" im Kontextmenü aller Dateien. Den Standardwert von .<endung> und UserChoice fasst Textline nie an.
-; Ausführbare Dateien und Skripte (.bat, .js, .ps1 ...) stehen NICHT unter "Öffnen mit" - sonst zeigt Windows beim
-; Doppelklick "Wählen Sie eine App aus" statt sie auszuführen -, sondern haben nur "Mit Textline bearbeiten" im Kontextmenü.
+; Ausführbare Dateien und Skripte (.bat, .js, .ps1 ...) bekommen KEINEN OpenWithProgids-Eintrag - sonst zeigt Windows
+; beim Doppelklick "Wählen Sie eine App aus" statt sie auszuführen -, sondern "Mit Textline bearbeiten" im Kontextmenü und
+; Textline als zuletzt benutzte App unter "Öffnen mit".
 ; SHCTX = HKCU bei "Nur für mich" (Standard), HKLM nur bei "Für alle Benutzer".
 
 @LISTS@
@@ -344,6 +345,91 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
   !insertmacro textlineDeleteIfEmpty SHCTX "Software\Classes\SystemFileAssociations\.${EXT}"
 !macroend
 
+; Skript-Typen: Textline unter "Öffnen mit" als zuletzt benutzte App eintragen - genau das schreibt Windows selbst,
+; nachdem man einmal "Öffnen mit -> Textline" gewählt hat. Anders als ein OpenWithProgids-Eintrag lässt das Windows
+; beim Doppelklick nicht nach einer App fragen; die .bat startet weiter.
+!macro textlineAddRecent EXT
+  Push $R1
+  Push $R2
+  Push $R3
+  Push $R4
+  StrCpy $R3 "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.${EXT}\OpenWithList"
+  StrCpy $R1 0
+  ${Do}
+    StrCpy $R2 "abcdefghijklmnopqrstuvwxyz" 1 $R1
+    ${If} $R2 == ""
+      ${Break}  ; alle Plätze belegt
+    ${EndIf}
+    ClearErrors
+    ReadRegStr $R4 HKCU $R3 $R2
+    ${If} ${Errors}  ; freier Platz: eintragen und hinten an die Reihenfolge hängen
+      WriteRegStr HKCU $R3 $R2 "${APP_EXECUTABLE_FILENAME}"
+      ReadRegStr $R4 HKCU $R3 "MRUList"
+      WriteRegStr HKCU $R3 "MRUList" "$R4$R2"
+      ${Break}
+    ${EndIf}
+    ${If} $R4 == "${APP_EXECUTABLE_FILENAME}"
+      ${Break}  ; steht schon drin
+    ${EndIf}
+    IntOp $R1 $R1 + 1
+  ${Loop}
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+!macroend
+
+!macro textlineRemoveRecent EXT
+  Push $R1
+  Push $R2
+  Push $R3
+  Push $R4
+  Push $R5
+  Push $R6
+  StrCpy $R3 "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.${EXT}\OpenWithList"
+  StrCpy $R1 0
+  ${Do}
+    StrCpy $R2 "abcdefghijklmnopqrstuvwxyz" 1 $R1
+    ${If} $R2 == ""
+      ${Break}
+    ${EndIf}
+    ClearErrors
+    ReadRegStr $R4 HKCU $R3 $R2
+    ${IfNot} ${Errors}
+    ${AndIf} $R4 == "${APP_EXECUTABLE_FILENAME}"
+      DeleteRegValue HKCU $R3 $R2
+      ; den Buchstaben aus der Reihenfolge nehmen
+      ReadRegStr $R4 HKCU $R3 "MRUList"
+      StrCpy $R5 ""
+      StrCpy $R6 0
+      ${Do}
+        StrCpy $R1 $R4 1 $R6
+        ${If} $R1 == ""
+          ${Break}
+        ${EndIf}
+        ${If} $R1 != $R2
+          StrCpy $R5 "$R5$R1"
+        ${EndIf}
+        IntOp $R6 $R6 + 1
+      ${Loop}
+      ${If} $R5 == ""
+        DeleteRegValue HKCU $R3 "MRUList"
+        !insertmacro textlineDeleteIfEmpty HKCU $R3
+      ${Else}
+        WriteRegStr HKCU $R3 "MRUList" $R5
+      ${EndIf}
+      ${Break}
+    ${EndIf}
+    IntOp $R1 $R1 + 1
+  ${Loop}
+  Pop $R6
+  Pop $R5
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+!macroend
+
 !macro customInstall
   Push $0
   Push $1
@@ -368,6 +454,7 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
   !insertmacro textlineEditTypes textlineAddEdit
+  !insertmacro textlineEditTypes textlineAddRecent
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   Pop $1
   Pop $0
@@ -378,6 +465,7 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
     !insertmacro textlineTypes textlineRemoveType
     !insertmacro textlineScripts textlineCleanScript
     !insertmacro textlineEditTypes textlineRemoveEdit
+    !insertmacro textlineEditTypes textlineRemoveRecent
     !insertmacro textlineProgIds textlineRemoveProgId
     !insertmacro textlineRetiredProgIds textlineDropRetiredProgId
     DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
