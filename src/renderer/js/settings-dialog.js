@@ -120,6 +120,8 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       paintAccents();
       const size = h('input', { type: 'number', class: 'input small', min: '8', max: '40', value: String(S.fontSize) });
       size.addEventListener('change', () => update({ fontSize: Math.min(40, Math.max(8, Number(size.value) || 14)) }));
+      // Mausrad verstellt die Zahl nicht (beim Durchscrollen der Einstellungen) - es scrollt einfach weiter
+      size.addEventListener('wheel', () => size.blur(), { passive: true });
       return [
         section(T('setTheme'), grid),
         section(T('setMode'), segmented('mode', [['system', T('modeSystem')], ['light', T('modeLight')], ['dark', T('modeDark')]], paintThemes)),
