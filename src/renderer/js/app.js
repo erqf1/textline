@@ -21,10 +21,15 @@ const DEFAULTS = {
   closeBrackets: true, autocomplete: true, restoreSession: true, trimTrailing: false, finalNewline: false,
   newEol: 'auto', newEncoding: 'utf8', pythonMode: 'env', pythonPath: '', saveBeforeRun: true, clearConsoleOnRun: true,
   pythonCheck: true, recent: [], consoleHeight: 220, previewWidth: 44, consoleOpen: false, menuBar: true, fileIcons: 'auto',
+  // Terminal-Design und Cursor
+  termScheme: 'catppuccin', termOpacity: 0.8, termBlur: 'acrylic', termBg: '', termImage: '', termImageOpacity: 0.35, termImageBlur: 0,
+  cursorStyle: 'bar', cursorBlink: true, lineHeight: 1.6,
 };
 const DEFAULT_FONT = '"Cascadia Mono", "Cascadia Code", Consolas, "JetBrains Mono", "SF Mono", Menlo, "DejaVu Sans Mono", "Liberation Mono", monospace';
 // Minimalist (wie Notepad++): Courier New, solange keine eigene Schrift gewählt ist
 const CLASSIC_FONT = '"Courier New", Courier, "Liberation Mono", monospace';
+// Terminal: Nerd-Font, wenn installiert, sonst die mitgelieferte JetBrains Mono
+const TERMINAL_FONT = '"JetBrainsMono Nerd Font", "JetBrainsMono NF", "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
 const lookStyle = () => themeById(S.theme).style || 'modern';
 
 let S = { ...DEFAULTS };
@@ -54,8 +59,9 @@ function update(patch) {
   Object.assign(S, patch);
   saveSettings();
   const relabelNeeded = 'language' in patch && patch.language !== before.language;
-  if (['theme', 'mode', 'accent'].some((k) => k in patch)) applyLook();
-  if ('fontFamily' in patch || 'fontSize' in patch || 'theme' in patch) applyFont();
+  if (['theme', 'mode', 'accent', 'termScheme', 'termOpacity', 'termBlur', 'termBg', 'termImage', 'termImageOpacity', 'termImageBlur'].some((k) => k in patch)) applyLook();
+  if ('cursorStyle' in patch || 'cursorBlink' in patch) applyCursor();
+  if ('fontFamily' in patch || 'fontSize' in patch || 'theme' in patch || 'lineHeight' in patch) applyFont();
   if ('menuBar' in patch) applyMenuBar();
   const editorKeys = ['wrap', 'lineNumbers', 'activeLine', 'whitespace', 'closeBrackets', 'autocomplete', 'pythonCheck'];
   if (editorKeys.some((k) => k in patch)) reconfigureAll();
@@ -71,8 +77,18 @@ function update(patch) {
   else renderChrome();
 }
 
+const glassTheme = () => !!themeById(S.theme).glass;
+/** Durchsichtiges Fenster nur, wenn das System es kann (Windows 11, macOS) und Unschärfe nicht aus ist */
+const glassActive = () => glassTheme() && !!INFO.glass && S.termBlur !== 'none';
 function applyLook() {
-  const { dark } = applyTheme(S, systemDark);
+  const { dark, bg } = applyTheme({ ...S, glassActive: glassActive() }, systemDark);
+  if (api.setGlass) api.setGlass({ material: glassActive() ? S.termBlur : 'none', bg });
+  // eigenes Hintergrundbild (nur Terminal-Design, nur am PC)
+  const root = document.documentElement.style;
+  const img = glassTheme() && S.termImage && !WEB ? `url("file:///${encodeURI(S.termImage.replace(/\\/g, '/').replace(/^\/+/, ''))}")` : 'none';
+  root.setProperty('--bg-image', img);
+  root.setProperty('--bg-image-opacity', String(img === 'none' ? 0 : S.termImageOpacity));
+  root.setProperty('--bg-image-blur', `${S.termImageBlur || 0}px`);
   for (const tb of tabs) tb.state = tb === active ? tb.state : tb.state.update({ effects: E.reconfigure(editorOptions(tb), ['dark']) }).state;
   if (view && active) view.dispatch({ effects: E.reconfigure(editorOptions(active), ['dark']) });  // ohne Tab (Startbildschirm) nichts zu tun
   document.documentElement.dataset.dark = dark ? '1' : '0';
@@ -82,9 +98,14 @@ function applyLook() {
 function applyMenuBar() {
   document.documentElement.dataset.menubar = S.menuBar ? '1' : '0';
 }
+function applyCursor() {
+  document.documentElement.dataset.cursor = S.cursorStyle || 'bar';
+  document.documentElement.dataset.blink = S.cursorBlink ? '1' : '0';
+}
 function applyFont() {
   const root = document.documentElement.style;
-  root.setProperty('--editor-font', S.fontFamily || (lookStyle() === 'classic' ? CLASSIC_FONT : DEFAULT_FONT));
+  root.setProperty('--editor-font', S.fontFamily || (lookStyle() === 'classic' ? CLASSIC_FONT : lookStyle() === 'terminal' ? TERMINAL_FONT : DEFAULT_FONT));
+  root.setProperty('--editor-line', String(S.lineHeight || 1.6));
   root.setProperty('--editor-size', `${S.fontSize}px`);
   if (view) view.requestMeasure();
 }
@@ -1083,7 +1104,7 @@ function menus() {
 
 function settingsDialog(page) {
   openSettings({
-    S, update, T, api, page, systemDark: () => systemDark, canFileIcons: !!INFO.fileIcons, web: WEB,
+    S, update, T, api, page, systemDark: () => systemDark, canFileIcons: !!INFO.fileIcons, web: WEB, canGlass: !!INFO.glass,
     languages: i18n.LANGS.map(([code, name]) => [code, name]),
     openPackages: () => CMD.packages.run(),
     pythonInfo: async () => {
@@ -1397,8 +1418,9 @@ async function main() {
   systemDark = INFO.dark;
   document.documentElement.dataset.platform = INFO.platform;
   document.documentElement.lang = S.language || i18n.guess(navigator.language);
-  applyTheme(S, systemDark);
+  applyLook();
   applyFont();
+  applyCursor();
   applyMenuBar();
   buildKeymap();
 

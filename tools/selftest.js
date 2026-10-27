@@ -174,6 +174,29 @@ module.exports = function selftest(win, dir, { python }) {
       await shot('accent-blue');
       await act(`window.__textline.update({ accent: '' })`);
 
+      // Terminal: Farbschema, Durchsichtigkeit (wo das System es kann), Cursor-Form
+      await act(`window.__textline.update({ theme: 'terminal', mode: 'dark', termScheme: 'catppuccin', termOpacity: 0.7, termBlur: 'acrylic', cursorStyle: 'block' })`);
+      const tbg = await js(`getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()`);
+      check('terminal uses the Catppuccin colors', /^rgba\(30, 30, 46/.test(tbg) || tbg === '#1e1e2e', tbg);
+      check('terminal is see-through where possible', tbg.endsWith('0.7)') || process.platform === 'linux', tbg);
+      check('terminal uses the bundled/terminal font', /JetBrains/.test(await js(`getComputedStyle(document.documentElement).getPropertyValue('--editor-font')`)));
+      check('block cursor is set', (await js(`document.documentElement.dataset.cursor`)) === 'block');
+      await shot('theme-terminal-catppuccin');
+      for (const sch of ['dracula', 'tokyonight', 'onedark', 'gruvbox', 'nord', 'rosepine', 'campbell']) {
+        await act(`window.__textline.update({ termScheme: '${sch}' })`);
+        await shot(`theme-terminal-${sch}`);
+      }
+      await act(`window.__textline.update({ termScheme: 'catppuccin', mode: 'light' })`);
+      check('Catppuccin switches to Latte in light mode', (await js(`getComputedStyle(document.documentElement).getPropertyValue('--text').trim()`)) === '#4c4f69');
+      await act(`window.__textline.update({ termBlur: 'none' })`);
+      check('blur off makes it solid', !(await js(`getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()`)).startsWith('rgba'));
+      await fire(`window.__textline.settingsDialog('look')`);
+      await wait(400);
+      check('terminal settings show the color schemes', await js(`document.querySelectorAll('.scheme-card').length === 8`));
+      await shot('settings-terminal');
+      await key('Escape');
+      await act(`window.__textline.update({ theme: 'standard', mode: 'dark', cursorStyle: 'bar', termBlur: 'acrylic' })`);
+
       // Simple: Menü "Datei" offen
       await act(`window.__textline.update({ theme: 'simple', mode: 'light', language: 'de' })`);
       await js(`document.querySelector('.menubar-item').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))`);

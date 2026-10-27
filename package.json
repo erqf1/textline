@@ -1,7 +1,7 @@
 {
   "name": "textline",
   "productName": "Textline",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Schneller Text- und Code-Editor mit Farben für viele Sprachen und Python zum Ausführen.",
   "main": "src/main.js",
   "private": true,
@@ -68,6 +68,7 @@
       "src/renderer/index.html",
       "src/renderer/style.css",
       "src/renderer/dist/**/*",
+      "src/renderer/fonts/**/*",
       "assets/icon.png",
       "package.json"
     ],

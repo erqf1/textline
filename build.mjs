@@ -18,5 +18,6 @@ if (!process.argv.includes('--web')) {
   // eigener Cache-Name je Build: so holt sich der Service Worker nach jedem Hochladen die neue Version
   fs.writeFileSync(`${out}/sw.js`, fs.readFileSync('src/web/sw.js', 'utf8').replace('__VERSION__', `${version}-${Date.now().toString(36)}`));
   fs.copyFileSync('src/web/index.html', `${out}/index.html`);
+  fs.cpSync('src/renderer/fonts', `${out}/fonts`, { recursive: true });
   fs.writeFileSync(`${out}/style.css`, `${fs.readFileSync('src/renderer/style.css', 'utf8')}\n${fs.readFileSync('src/web/web.css', 'utf8')}`);
 }

@@ -356,3 +356,44 @@ body.dropping #editor-pane::after { content: ""; position: absolute; inset: 8px;
 :root[data-style="classic"] .overlay { background: rgba(0, 0, 0, 0.2); animation: none; }
 :root[data-style="classic"] .btn.primary { font-weight: 400; }
 :root[data-style="classic"] .welcome-logo svg rect { rx: 0; }
+
+/* ---------------------------------------------------------------- Terminal-Design (durchsichtig wie Windows Terminal) */
+/* mitgelieferte JetBrains Mono (OFL, fonts/OFL.txt) - eine installierte Nerd-Font hat Vorrang */
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url(fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 700; font-style: normal; font-display: swap; src: url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: italic; font-display: swap; src: url(fonts/jetbrains-mono-latin-400-italic.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url(fonts/jetbrains-mono-latin-ext-400-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 700; font-style: normal; font-display: swap; src: url(fonts/jetbrains-mono-latin-ext-700-normal.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-style: italic; font-display: swap; src: url(fonts/jetbrains-mono-latin-ext-400-italic.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root[data-style="terminal"] .menubar { padding: 3px 6px 0; height: 30px; gap: 1px; }
+:root[data-style="terminal"] .menubar-item { border-radius: var(--radius-sm); color: var(--muted); }
+:root[data-style="terminal"] .menubar-item:hover, :root[data-style="terminal"] .menubar-item.open { color: var(--text); }
+/* Hintergrundbild hinter allem (eigene Ebene, damit Deckkraft und Unschärfe nur das Bild betreffen) */
+#app { position: relative; isolation: isolate; }
+#app::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--bg-image, none) center / cover no-repeat;
+  opacity: var(--bg-image-opacity, 0); filter: blur(var(--bg-image-blur, 0px)); transform: scale(1.04); }
+/* Durchsichtig: Menüs, Dialoge und Hinweise fast deckend mit Milchglas, damit sie lesbar bleiben */
+:root[data-glass="1"] .menu, :root[data-glass="1"] .dialog, :root[data-glass="1"] .toast { background: var(--popup); backdrop-filter: blur(22px) saturate(1.4); }
+:root[data-glass="1"] .tab.active { background: color-mix(in srgb, var(--text) 9%, transparent); }
+:root[data-glass="1"] #topbar, :root[data-glass="1"] #statusbar { border-color: color-mix(in srgb, var(--line) 70%, transparent); }
+.theme-card.terminal .theme-mini { position: relative; background-image: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 60%) !important; }
+/* Cursor: Strich (Standard), Block, Unterstrich; Blinken aus */
+:root[data-cursor="block"] .cm-cursor { border-left-width: 0 !important; width: 0.62em !important; background: var(--accent) !important; opacity: 0.6; }
+:root[data-cursor="underline"] .cm-cursor { border-left-width: 0 !important; width: 0.62em !important; border-bottom: 2px solid var(--accent) !important; }
+:root[data-blink="0"] .cm-cursorLayer { animation: none !important; }
+/* Einstellungen: Farbschemata als Farbblöcke (wie bei fastfetch) */
+.scheme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.scheme-card { display: grid; gap: 6px; padding: 8px; border-radius: var(--radius); border: 2px solid transparent; background: var(--panel2); text-align: left; cursor: default; color: var(--text); }
+.scheme-card:hover { border-color: var(--line); }
+.scheme-card.on { border-color: var(--accent); }
+.scheme-card .blocks { display: grid; grid-template-columns: repeat(8, 1fr); height: 22px; border-radius: 4px; overflow: hidden; }
+.scheme-card .blocks i { display: block; }
+.scheme-card small { color: var(--muted); }
+.set-range { display: grid; grid-template-columns: 150px 1fr 54px; align-items: center; gap: 10px; }
+.set-range input[type=range] { width: 100%; accent-color: var(--accent); }
+.set-range b { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+/* durchsichtig: Flächen innen nicht nochmal einfärben (sonst wird es Schicht für Schicht wieder deckend) */
+:root[data-glass="1"] .cm-editor, :root[data-glass="1"] #editor-pane, :root[data-glass="1"] #preview-pane, :root[data-glass="1"] #console,
+:root[data-glass="1"] .welcome { background: transparent !important; }
+:root[data-glass="1"] .cm-tooltip, :root[data-glass="1"] .cm-panels { background: var(--popup) !important; backdrop-filter: blur(22px) saturate(1.4); }

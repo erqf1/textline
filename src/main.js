@@ -87,8 +87,25 @@ const python = new Python(app.getPath('userData'), (channel, payload) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
 });
 
+/** Durchsichtiges Fenster mit Unschärfe: Windows 11 (22H2, Build 22621+) und macOS; sonst nur die Farbe */
+function canGlass() {
+  if (process.platform === 'darwin') return true;
+  if (process.platform !== 'win32') return false;
+  return Number(os.release().split('.')[2] || 0) >= 22621;
+}
+/** material: 'acrylic' | 'mica' | 'none'; bg = Farbe, wenn nichts durchscheinen soll */
+function setGlass(material, bg) {
+  if (!win || win.isDestroyed()) return;
+  const on = canGlass() && material && material !== 'none';
+  win.setBackgroundColor(on ? '#00000000' : bg || '#0d0f14');
+  if (process.platform === 'win32' && canGlass()) win.setBackgroundMaterial(on ? material : 'none');
+  if (process.platform === 'darwin') win.setVibrancy(on ? (material === 'mica' ? 'sidebar' : 'under-window') : null);
+}
+
 function createWindow() {
   const state = settings.window || {};
+  // Terminal-Design schon beim Öffnen durchsichtig (sonst blitzt kurz eine volle Farbe auf)
+  const glassStart = settings.theme === 'terminal' && canGlass() && (settings.termBlur || 'acrylic') !== 'none';
   win = new BrowserWindow({
     width: state.width || 1180,
     height: state.height || 780,
@@ -98,7 +115,9 @@ function createWindow() {
     minHeight: 360,
     show: false,
     title: 'Textline',
-    backgroundColor: settings.mode === 'light' || (settings.mode !== 'dark' && !nativeTheme.shouldUseDarkColors) ? '#ffffff' : '#0d0f14',
+    backgroundColor: glassStart ? '#00000000' : settings.mode === 'light' || (settings.mode !== 'dark' && !nativeTheme.shouldUseDarkColors) ? '#ffffff' : '#0d0f14',
+    ...(glassStart && process.platform === 'win32' ? { backgroundMaterial: settings.termBlur || 'acrylic' } : {}),
+    ...(glassStart && process.platform === 'darwin' ? { vibrancy: 'under-window', visualEffectState: 'active' } : {}),
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
@@ -194,7 +213,9 @@ ipcMain.handle('app:info', () => ({
   dark: nativeTheme.shouldUseDarkColors,
   selfTest: !!selfTest,
   fileIcons: fileIcons.available(),
+  glass: canGlass(),
 }));
+ipcMain.handle('win:glass', (_e, { material, bg } = {}) => setGlass(material, bg));
 ipcMain.handle('app:close-now', () => {
   closingAllowed = true;
   python.stopAll();

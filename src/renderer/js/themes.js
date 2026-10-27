@@ -73,6 +73,44 @@ export const THEMES = [
   },
 ];
 
+// Terminal: Farbschemata wie in Windows Terminal und Co. Die Farben kommen aus settings.termScheme, das Fenster ist
+// durchsichtig (Acryl/Mica, siehe main.js "win:glass"). Schemata ohne helle Variante bleiben im hellen Modus dunkel.
+THEMES.push({ id: 'terminal', accent: null, syntax: null, style: 'terminal', glass: true });
+
+// bg/panel/line/text/muted + Farben: red green yellow blue magenta cyan orange pink comment, accent
+export const SCHEMES = [
+  { id: 'catppuccin', name: 'Catppuccin',
+    dark: { bg: '#1e1e2e', panel: '#181825', line: '#313244', text: '#cdd6f4', muted: '#a6adc8', red: '#f38ba8', green: '#a6e3a1', yellow: '#f9e2af', blue: '#89b4fa', magenta: '#cba6f7', cyan: '#94e2d5', orange: '#fab387', pink: '#f5c2e7', comment: '#7f849c', accent: '#cba6f7' },
+    light: { bg: '#eff1f5', panel: '#e6e9ef', line: '#ccd0da', text: '#4c4f69', muted: '#6c6f85', red: '#d20f39', green: '#40a02b', yellow: '#df8e1d', blue: '#1e66f5', magenta: '#8839ef', cyan: '#179299', orange: '#fe640b', pink: '#ea76cb', comment: '#8c8fa1', accent: '#8839ef' } },
+  { id: 'dracula', name: 'Dracula',
+    dark: { bg: '#282a36', panel: '#21222c', line: '#44475a', text: '#f8f8f2', muted: '#a9abb8', red: '#ff5555', green: '#50fa7b', yellow: '#f1fa8c', blue: '#8be9fd', magenta: '#ff79c6', cyan: '#8be9fd', orange: '#ffb86c', pink: '#ff79c6', comment: '#6272a4', accent: '#bd93f9' } },
+  { id: 'tokyonight', name: 'Tokyo Night',
+    dark: { bg: '#1a1b26', panel: '#16161e', line: '#292e42', text: '#c0caf5', muted: '#9aa5ce', red: '#f7768e', green: '#9ece6a', yellow: '#e0af68', blue: '#7aa2f7', magenta: '#bb9af7', cyan: '#7dcfff', orange: '#ff9e64', pink: '#ff007c', comment: '#565f89', accent: '#7aa2f7' },
+    light: { bg: '#e1e2e7', panel: '#d5d6db', line: '#c4c8da', text: '#3760bf', muted: '#6172b0', red: '#f52a65', green: '#587539', yellow: '#8c6c3e', blue: '#2e7de9', magenta: '#9854f1', cyan: '#007197', orange: '#b15c00', pink: '#d20065', comment: '#848cb5', accent: '#2e7de9' } },
+  { id: 'onedark', name: 'One Dark',
+    dark: { bg: '#282c34', panel: '#21252b', line: '#3e4451', text: '#abb2bf', muted: '#8b929e', red: '#e06c75', green: '#98c379', yellow: '#e5c07b', blue: '#61afef', magenta: '#c678dd', cyan: '#56b6c2', orange: '#d19a66', pink: '#c678dd', comment: '#5c6370', accent: '#61afef' },
+    light: { bg: '#fafafa', panel: '#f0f0f0', line: '#d4d4d4', text: '#383a42', muted: '#696c77', red: '#e45649', green: '#50a14f', yellow: '#c18401', blue: '#4078f2', magenta: '#a626a4', cyan: '#0184bc', orange: '#986801', pink: '#a626a4', comment: '#a0a1a7', accent: '#4078f2' } },
+  { id: 'gruvbox', name: 'Gruvbox',
+    dark: { bg: '#282828', panel: '#1d2021', line: '#3c3836', text: '#ebdbb2', muted: '#bdae93', red: '#fb4934', green: '#b8bb26', yellow: '#fabd2f', blue: '#83a598', magenta: '#d3869b', cyan: '#8ec07c', orange: '#fe8019', pink: '#d3869b', comment: '#928374', accent: '#fabd2f' },
+    light: { bg: '#fbf1c7', panel: '#f2e5bc', line: '#d5c4a1', text: '#3c3836', muted: '#665c54', red: '#9d0006', green: '#79740e', yellow: '#b57614', blue: '#076678', magenta: '#8f3f71', cyan: '#427b58', orange: '#af3a03', pink: '#8f3f71', comment: '#928374', accent: '#af3a03' } },
+  { id: 'nord', name: 'Nord',
+    dark: { bg: '#2e3440', panel: '#272c36', line: '#3b4252', text: '#d8dee9', muted: '#a4adbd', red: '#bf616a', green: '#a3be8c', yellow: '#ebcb8b', blue: '#81a1c1', magenta: '#b48ead', cyan: '#88c0d0', orange: '#d08770', pink: '#b48ead', comment: '#616e88', accent: '#88c0d0' } },
+  { id: 'rosepine', name: 'Rosé Pine',
+    dark: { bg: '#191724', panel: '#1f1d2e', line: '#26233a', text: '#e0def4', muted: '#908caa', red: '#eb6f92', green: '#9ccfd8', yellow: '#f6c177', blue: '#31748f', magenta: '#c4a7e7', cyan: '#9ccfd8', orange: '#f6c177', pink: '#ebbcba', comment: '#6e6a86', accent: '#ebbcba' },
+    light: { bg: '#faf4ed', panel: '#fffaf3', line: '#dfdad9', text: '#575279', muted: '#797593', red: '#b4637a', green: '#56949f', yellow: '#ea9d34', blue: '#286983', magenta: '#907aa9', cyan: '#56949f', orange: '#ea9d34', pink: '#d7827e', comment: '#9893a5', accent: '#d7827e' } },
+  { id: 'campbell', name: 'Campbell',
+    dark: { bg: '#0c0c0c', panel: '#111111', line: '#2a2a2a', text: '#cccccc', muted: '#9a9a9a', red: '#e74856', green: '#16c60c', yellow: '#f9f1a5', blue: '#3b78ff', magenta: '#b4009e', cyan: '#61d6d6', orange: '#c19c00', pink: '#e74856', comment: '#767676', accent: '#3b78ff' } },
+];
+export const schemeById = (id) => SCHEMES.find((x) => x.id === id) || SCHEMES[0];
+/** Schema -> Oberfläche + Syntaxfarben (die acht "Farbblöcke" wie bei fastfetch: dunkel, Rot … Hell) */
+function fromScheme(v) {
+  return {
+    ui: { bg: v.bg, panel: v.panel, panel2: mix(v.bg, v.line, 0.6), line: v.line, text: v.text, muted: v.muted, accent: v.accent },
+    syn: { keyword: v.magenta, string: v.green, number: v.orange, comment: v.comment, function: v.blue, type: v.yellow, property: v.cyan, tag: v.red, attr: v.yellow, operator: v.cyan, constant: v.orange, regexp: v.pink, heading: v.blue, link: v.cyan, meta: v.yellow, invalid: v.red },
+  };
+}
+export const schemeBlocks = (v) => [v.line, v.red, v.green, v.yellow, v.blue, v.pink, v.cyan, v.muted];
+
 export const ACCENTS = ['#f5a524', '#ff4d6d', '#ff8a4c', '#facc15', '#4ade9b', '#22c3a6', '#4aa3ff', '#6366f1', '#a78bfa', '#f472b6', '#9ea7b3'];
 
 export const themeById = (id) => THEMES.find((x) => x.id === id) || THEMES[0];
@@ -101,9 +139,21 @@ const mix = (a, b, w) => {
 /** Setzt alle CSS-Variablen für Design + Modus + Akzentfarbe */
 export function applyTheme(settings, systemDark) {
   const theme = themeById(settings.theme);
-  const dark = settings.mode === 'dark' || (settings.mode !== 'light' && systemDark);
-  const ui = dark ? theme.dark : theme.light;
-  const syn = SYN[theme.syntax][dark ? 'dark' : 'light'];
+  let dark = settings.mode === 'dark' || (settings.mode !== 'light' && systemDark);
+  let ui, syn;
+  // Terminal: Farben aus dem gewählten Schema, durchsichtig wenn das Fenster Acryl/Mica kann (settings.glassActive)
+  let glass = 0;
+  if (theme.glass) {
+    const sch = schemeById(settings.termScheme);
+    const v = dark || !sch.light ? sch.dark : sch.light;
+    dark = v === sch.dark;
+    ({ ui, syn } = fromScheme(v));
+    if (settings.termBg) ui = { ...ui, bg: settings.termBg, panel: mix(settings.termBg, '#000000', dark ? 0.18 : 0.04), panel2: mix(settings.termBg, ui.line, 0.6) };
+    glass = settings.glassActive ? Math.min(1, Math.max(0.15, Number(settings.termOpacity ?? 0.8))) : 1;
+  } else {
+    ui = dark ? theme.dark : theme.light;
+    syn = SYN[theme.syntax][dark ? 'dark' : 'light'];
+  }
   const style = theme.style || 'modern';
   const custom = !!settings.accent;
   let accent = settings.accent || theme.accent || ui.accent;
@@ -129,6 +179,18 @@ export function applyTheme(settings, systemDark) {
     '--danger': dark ? '#ff6b6b' : '#d92d2d',
     '--ok': dark ? '#4ade80' : '#15803d',
   };
+  if (theme.glass) {
+    // alles leicht durchsichtig wie im Terminal; Menüs und Dialoge fast deckend (mit Unschärfe, siehe style.css)
+    // --bg liegt nur einmal auf dem ganzen Fenster (body); Leisten/Knöpfe sind darüber nur eine leichte Tönung
+    vars['--bg'] = glass < 1 ? alpha(ui.bg, glass) : ui.bg;
+    vars['--panel'] = glass < 1 ? alpha(ui.panel, 0.45) : ui.panel;
+    vars['--panel2'] = glass < 1 ? alpha(ui.panel2, 0.7) : ui.panel2;
+    vars['--gutter-bg'] = 'transparent';
+    vars['--popup'] = glass < 1 ? alpha(ui.panel, Math.max(glass, 0.92)) : ui.panel;
+    vars['--active-line'] = dark ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.04)';
+  } else {
+    vars['--popup'] = ui.panel;
+  }
   for (const [k, v] of Object.entries(syn)) vars[`--syn-${k}`] = v;
   // Notepad++: Schlüsselwörter und Operatoren fett, Kommentare nicht kursiv
   const npp = theme.syntax === 'npp';
@@ -139,13 +201,19 @@ export function applyTheme(settings, systemDark) {
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   root.dataset.style = style;
   root.dataset.mode = dark ? 'dark' : 'light';
+  root.dataset.glass = glass && glass < 1 ? '1' : '0';
   root.style.colorScheme = dark ? 'dark' : 'light';
-  return { theme, dark, accent };
+  return { theme, dark, accent, bg: ui.bg };
 }
 
 /** Farben eines Designs für die kleinen Vorschauen im Einstellungsfenster */
-export function previewColors(themeId, dark, accent) {
+export function previewColors(themeId, dark, accent, termScheme) {
   const theme = themeById(themeId);
+  if (theme.glass) {
+    const sch = schemeById(termScheme);
+    const { ui, syn } = fromScheme(dark || !sch.light ? sch.dark : sch.light);
+    return { ...ui, accent: accent || ui.accent, syn, style: 'terminal', glass: true };
+  }
   const ui = dark ? theme.dark : theme.light;
   const syn = SYN[theme.syntax][dark ? 'dark' : 'light'];
   return { ...ui, accent: accent || theme.accent || ui.accent, syn, style: theme.style || 'modern' };
@@ -153,5 +221,6 @@ export function previewColors(themeId, dark, accent) {
 
 /** Licht-Farben für den Ausdruck (Papier ist weiß) */
 export function printColors(themeId) {
-  return SYN[themeById(themeId).syntax].light;
+  const theme = themeById(themeId);
+  return theme.glass ? SYN.material.light : SYN[theme.syntax].light;
 }

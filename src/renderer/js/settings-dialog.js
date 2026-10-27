@@ -1,6 +1,6 @@
 // Einstellungen: Allgemein, Aussehen, Editor, Python. Jede Änderung wirkt sofort (update(patch)).
 import { h, dialog } from './ui.js';
-import { THEMES, ACCENTS, previewColors } from './themes.js';
+import { THEMES, ACCENTS, SCHEMES, previewColors, schemeBlocks } from './themes.js';
 
 export const FONTS = [
   ['', 'Standard'],
@@ -14,7 +14,7 @@ export const FONTS = [
   ['"Courier New", monospace', 'Courier New'],
 ];
 
-export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, canFileIcons, web = false, page = 'general' }) {
+export async function openSettings({ S, update, T, languages, api, openPackages, pythonInfo, systemDark, canFileIcons, web = false, canGlass = false, page = 'general' }) {
   const tabs = [
     ['general', T('setGeneral')],
     ['look', T('setLook')],
@@ -50,6 +50,16 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
     return wrap;
   };
   const section = (title, ...kids) => h('div', { class: 'set-section' }, h('div', { class: 'set-title', text: title }), ...kids);
+  /** Schieberegler; fmt zeigt den Wert, live = schon beim Ziehen übernehmen */
+  const range = (key, label, min, max, step, fmt, disabled) => {
+    const val = h('b', { text: fmt(S[key]) });
+    const r = h('input', { type: 'range', min: String(min), max: String(max), step: String(step), value: String(S[key]), disabled });
+    r.addEventListener('input', () => {
+      val.textContent = fmt(Number(r.value));
+      update({ [key]: Number(r.value) });
+    });
+    return h('label', { class: 'set-range' }, h('span', { text: label }), r, val);
+  };
 
   const pages = {
     general() {
@@ -68,7 +78,7 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
         grid.textContent = '';
         const dark = S.mode === 'dark' || (S.mode !== 'light' && systemDark());
         for (const th of THEMES) {
-          const c = previewColors(th.id, dark, S.accent);
+          const c = previewColors(th.id, dark, S.accent, S.termScheme);
           const card = h('button', { class: `theme-card ${c.style}${S.theme === th.id ? ' on' : ''}` },
             h('div', { class: 'theme-mini', style: { background: c.bg, borderColor: c.line } },
               h('div', { class: 'mini-bar', style: { background: c.panel } }, h('i', { style: { background: c.accent } })),
@@ -81,6 +91,7 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
             update({ theme: th.id });
             paintThemes();
             paintAccents();
+            termBox.hidden = th.id !== 'terminal';
           });
           grid.append(card);
         }
@@ -112,6 +123,54 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
         });
         accentRow.append(h('label', { class: 'swatch-wrap' }, custom, h('span', { text: T('setAccentCustom') })));
       };
+      // ---- Terminal-Design: Farbschema, Durchsichtigkeit, Unschärfe, Hintergrund
+      const schemes = h('div', { class: 'scheme-grid' });
+      const paintSchemes = () => {
+        schemes.textContent = '';
+        const dark = S.mode === 'dark' || (S.mode !== 'light' && systemDark());
+        for (const sch of SCHEMES) {
+          const v = dark || !sch.light ? sch.dark : sch.light;
+          const card = h('button', { class: `scheme-card${(S.termScheme || 'catppuccin') === sch.id ? ' on' : ''}`, style: { background: v.bg, color: v.text } },
+            h('span', { text: sch.name }),
+            h('span', { class: 'blocks' }, schemeBlocks(v).map((col) => h('i', { style: { background: col } }))),
+            !sch.light ? h('small', { text: T('schemeDarkOnly') }) : null);
+          card.addEventListener('click', () => {
+            update({ termScheme: sch.id });
+            paintSchemes();
+            paintThemes();
+          });
+          schemes.append(card);
+        }
+      };
+      paintSchemes();
+      const pct = (x) => `${Math.round((1 - x) * 100)} %`;
+      const opacity = range('termOpacity', T('setOpacity'), 0.2, 1, 0.01, pct, !canGlass);
+      // Regler zeigt Durchsichtigkeit (0 % = deckend), gespeichert wird die Deckkraft
+      const blur = segmented('termBlur', [['acrylic', T('blurAcrylic')], ['mica', T('blurMica')], ['none', T('blurNone')]]);
+      if (!canGlass) blur.querySelectorAll('button').forEach((b) => (b.disabled = true));
+      const bgPick = h('input', { type: 'color', class: 'swatch-custom', value: S.termBg || '#1e1e2e' });
+      bgPick.addEventListener('input', () => update({ termBg: bgPick.value }));
+      const bgReset = h('button', { class: 'btn small', text: T('reset'), onclick: () => update({ termBg: '' }) });
+      const imgName = h('span', { class: 'muted', text: S.termImage ? S.termImage.split(/[\\/]/).pop() : '' });
+      const imgPick = h('button', { class: 'btn small', text: T('chooseImage'), onclick: async () => {
+        const files = await api.openDialog({ title: T('setBgImage'), filters: [{ name: 'Bilder', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'avif'] }] });
+        if (files[0]) {
+          update({ termImage: files[0] });
+          imgName.textContent = files[0].split(/[\\/]/).pop();
+        }
+      } });
+      const imgDel = h('button', { class: 'btn small', text: T('removeImage'), onclick: () => {
+        update({ termImage: '' });
+        imgName.textContent = '';
+      } });
+      const termBox = h('div', {},
+        section(T('setScheme'), schemes),
+        section(T('setGlass'), opacity, blur, !canGlass ? h('small', { class: 'muted', text: T(web ? 'glassWeb' : 'glassUnsupported') }) : h('small', { class: 'muted', text: T('glassHint') })),
+        section(T('setBgColor'), h('div', { class: 'set-row' }, h('label', { class: 'swatch-wrap' }, bgPick, h('span', { text: T('setAccentCustom') })), bgReset)),
+        web ? null : section(T('setBgImage'), h('div', { class: 'set-row' }, imgPick, imgDel, imgName),
+          range('termImageOpacity', T('setImageOpacity'), 0.05, 1, 0.01, (x) => `${Math.round(x * 100)} %`),
+          range('termImageBlur', T('setImageBlur'), 0, 40, 1, (x) => `${x} px`)));
+      termBox.hidden = S.theme !== 'terminal';
       paintThemes();
       paintAccents();
       const size = h('input', { type: 'number', class: 'input small', min: '8', max: '40', value: String(S.fontSize) });
@@ -120,6 +179,7 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
       size.addEventListener('wheel', () => size.blur(), { passive: true });
       return [
         section(T('setTheme'), grid),
+        termBox,
         section(T('setMode'), segmented('mode', [['system', T('modeSystem')], ['light', T('modeLight')], ['dark', T('modeDark')]], paintThemes)),
         section(T('setAccent'), accentRow),
         section(T('setMenuBar'), check('menuBar', T('setMenuBarShow'), T('setMenuBarHint'))),
@@ -129,7 +189,11 @@ export async function openSettings({ S, update, T, languages, api, openPackages,
           h('small', { class: 'muted', text: T('setFileIconsHint') })) : null,
         section(T('setFont'),
           select('fontFamily', T('setFontFamily'), FONTS.map(([v, n]) => [v, v ? n : T('fontDefault')])),
-          h('label', { class: 'set-row' }, h('span', { text: T('setFontSize') }), size)),
+          h('label', { class: 'set-row' }, h('span', { text: T('setFontSize') }), size),
+          range('lineHeight', T('setLineHeight'), 1.1, 2.2, 0.05, (x) => x.toFixed(2))),
+        section(T('setCursor'),
+          segmented('cursorStyle', [['bar', T('cursorBar')], ['block', T('cursorBlock')], ['underline', T('cursorUnderline')]]),
+          check('cursorBlink', T('cursorBlink'))),
       ];
     },
     editor() {

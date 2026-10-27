@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('api', {
   closeNow: () => invoke('app:close-now'),
   updateReady: () => ipcRenderer.send('app:update-ready'),
   setTitle: (title) => invoke('app:set-title', title),
+  setGlass: (opts) => invoke('win:glass', opts),
 
   openDialog: (opts) => invoke('file:open-dialog', opts),
   saveDialog: (opts) => invoke('file:save-dialog', opts),
