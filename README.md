@@ -2,7 +2,7 @@
 
 Schneller Text- und Code-Editor für Windows, Linux und macOS. Farben für über 140 Sprachen (Python, HTML, CSS, JavaScript, C, Java, Markdown, JSON …), Python eingebaut zum Ausführen – mit Konsole, Eingaben und einer Paketverwaltung wie in Thonny.
 
-**[Releases](https://github.com/erqf1/textline/releases)** · Lizenz: [MIT](LICENSE)
+**[Releases](https://github.com/erqf1/textline/releases)** · Lizenz: [Apache 2.0](LICENSE)
 
 ## Fertige Pakete
 

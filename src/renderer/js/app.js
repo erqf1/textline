@@ -924,7 +924,7 @@ function aboutDialog() {
       h('div', { class: 'welcome-logo', html: logoSvg() }),
       h('div', { class: 'about-name', text: `Textline ${INFO.version || ''}` }),
       h('p', { class: 'dialog-text', text: T('aboutText') }),
-      h('p', { class: 'muted', text: '© 2026 W Software · MIT License · CodeMirror' })),
+      h('p', { class: 'muted', text: '© 2026 W Software · Apache License 2.0 · CodeMirror' })),
     buttons: [
       { label: 'mert.win', value: 'web', left: true },
       { label: T('close'), value: 'ok', primary: true },
