@@ -304,6 +304,7 @@ const S = {
   theme_forest: ['Forest', 'Wald', 'Bosque', 'Forêt', 'Foresta', 'Floresta', 'Bos', 'Las', 'Orman', 'Лес', 'フォレスト', '森林'],
   theme_sunset: ['Sunset', 'Sonnenuntergang', 'Atardecer', 'Coucher de soleil', 'Tramonto', 'Pôr do sol', 'Zonsondergang', 'Zachód słońca', 'Gün batımı', 'Закат', 'サンセット', '日落'],
   theme_graphite: ['Graphite', 'Graphit', 'Grafito', 'Graphite', 'Grafite', 'Grafite', 'Grafiet', 'Grafit', 'Grafit', 'Графит', 'グラファイト', '石墨'],
+  theme_acryl: ['Acrylic', 'Acryl', 'Acrílico', 'Acrylique', 'Acrilico', 'Acrílico', 'Acryl', 'Akryl', 'Akrilik', 'Акрил', 'アクリル', '亚克力'],
   theme_simple: ['Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple', 'Simple'],
   theme_minimalist: ['Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist', 'Minimalist'],
 

@@ -3,6 +3,7 @@
 import { h, $, showMenu, closeMenus, menuOpen, dialog, dialogOpen, prompt, toast, keyLabel } from './ui.js';
 import { icon } from './icons.js';
 import { applyTheme, themeById, THEMES, printColors } from './themes.js';
+import { hueOf, smokeUrl } from './smoke.js';
 import { ALL, POPULAR, PLAIN, detectLanguage, findLanguage, defaultExtension, displayName } from './languages.js';
 import * as E from './editor.js';
 import { createConsole } from './console.js';
@@ -81,14 +82,15 @@ const glassTheme = () => !!themeById(S.theme).glass;
 /** Durchsichtiges Fenster nur, wenn das System es kann (Windows 11, macOS) und Unschärfe nicht aus ist */
 const glassActive = () => glassTheme() && !!INFO.glass && S.termBlur !== 'none';
 function applyLook() {
-  const { dark, bg } = applyTheme({ ...S, glassActive: glassActive() }, systemDark);
+  const { dark, bg, accent, acryl } = applyTheme({ ...S, glassActive: glassActive() }, systemDark);
   if (api.setGlass) api.setGlass({ material: glassActive() ? S.termBlur : 'none', bg });
   // eigenes Hintergrundbild (nur Terminal-Design, nur am PC)
   const root = document.documentElement.style;
-  const img = glassTheme() && S.termImage && !WEB ? `url("file:///${encodeURI(S.termImage.replace(/\\/g, '/').replace(/^\/+/, ''))}")` : 'none';
+  const img = acryl ? `url("${smokeUrl(hueOf(accent), dark)}")`
+    : glassTheme() && S.termImage && !WEB ? `url("file:///${encodeURI(S.termImage.replace(/\\/g, '/').replace(/^\/+/, ''))}")` : 'none';
   root.setProperty('--bg-image', img);
-  root.setProperty('--bg-image-opacity', String(img === 'none' ? 0 : S.termImageOpacity));
-  root.setProperty('--bg-image-blur', `${S.termImageBlur || 0}px`);
+  root.setProperty('--bg-image-opacity', String(acryl ? 1 : img === 'none' ? 0 : S.termImageOpacity));
+  root.setProperty('--bg-image-blur', `${acryl ? 20 : S.termImageBlur || 0}px`);
   for (const tb of tabs) tb.state = tb === active ? tb.state : tb.state.update({ effects: E.reconfigure(editorOptions(tb), ['dark']) }).state;
   if (view && active) view.dispatch({ effects: E.reconfigure(editorOptions(active), ['dark']) });  // ohne Tab (Startbildschirm) nichts zu tun
   document.documentElement.dataset.dark = dark ? '1' : '0';

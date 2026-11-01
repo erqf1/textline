@@ -77,6 +77,13 @@ export const THEMES = [
 // durchsichtig (Acryl/Mica, siehe main.js "win:glass"). Schemata ohne helle Variante bleiben im hellen Modus dunkel.
 THEMES.push({ id: 'terminal', accent: null, syntax: null, style: 'terminal', glass: true });
 
+// Acryl: rauchiger Hintergrund in der Akzentfarbe (smoke.js), Leisten wie mattes Glas. Das Fenster selbst bleibt deckend.
+THEMES.push({
+  id: 'acryl', accent: '#f5a524', syntax: 'material', acryl: true,
+  dark: { bg: '#1f1d1b', panel: '#2b2825', panel2: '#36322e', line: '#47423c', text: '#f1ede8', muted: '#b3aba1' },
+  light: { bg: '#efebe6', panel: '#f7f4f0', panel2: '#ffffff', line: '#d3cdc5', text: '#1f1b16', muted: '#6e665c' },
+});
+
 // bg/panel/line/text/muted + Farben: red green yellow blue magenta cyan orange pink comment, accent
 export const SCHEMES = [
   { id: 'catppuccin', name: 'Catppuccin',
@@ -188,6 +195,13 @@ export function applyTheme(settings, systemDark) {
     vars['--gutter-bg'] = 'transparent';
     vars['--popup'] = glass < 1 ? alpha(ui.panel, Math.max(glass, 0.92)) : ui.panel;
     vars['--active-line'] = dark ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.04)';
+  } else if (theme.acryl) {
+    vars['--panel'] = alpha(ui.panel, dark ? 0.5 : 0.55);
+    vars['--panel2'] = alpha(ui.panel2, 0.6);
+    vars['--line'] = dark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.10)';
+    vars['--gutter-bg'] = 'transparent';
+    vars['--popup'] = alpha(ui.panel, 0.94);
+    vars['--active-line'] = dark ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.04)';
   } else {
     vars['--popup'] = ui.panel;
   }
@@ -201,9 +215,9 @@ export function applyTheme(settings, systemDark) {
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   root.dataset.style = style;
   root.dataset.mode = dark ? 'dark' : 'light';
-  root.dataset.glass = glass && glass < 1 ? '1' : '0';
+  root.dataset.glass = (glass && glass < 1) || theme.acryl ? '1' : '0';  // Acryl nutzt dieselben durchscheinenden Flächen
   root.style.colorScheme = dark ? 'dark' : 'light';
-  return { theme, dark, accent, bg: ui.bg };
+  return { theme, dark, accent, bg: ui.bg, acryl: !!theme.acryl };
 }
 
 /** Farben eines Designs für die kleinen Vorschauen im Einstellungsfenster */
