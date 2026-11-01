@@ -345,7 +345,7 @@ function showWelcome() {
 }
 
 function logoSvg() {
-  return '<svg viewBox="0 0 64 64" width="56" height="56"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc24b"/><stop offset="1" stop-color="#f0782a"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="14" fill="url(#lg)"/><path d="M17 19h24M17 29h30M17 41h14" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M38 36v10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>';
+  return '<svg viewBox="0 0 64 64" width="56" height="56"><defs><clipPath id="tl-c"><rect x="4" y="4" width="56" height="56" rx="12.5"/></clipPath><filter id="tl-b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9.3"/></filter></defs><g clip-path="url(#tl-c)"><rect x="4" y="4" width="56" height="56" fill="#28252c"/><g filter="url(#tl-b)"><circle cx="46.6" cy="14.1" r="19.0" fill="#fcbe46"/><circle cx="14.1" cy="15.2" r="17.9" fill="#f0782e"/><circle cx="15.2" cy="51.0" r="20.2" fill="#c44246"/><circle cx="51.0" cy="51.0" r="19.0" fill="#96a03c"/><circle cx="32.0" cy="32.0" r="11.2" fill="#6e4222"/></g><rect x="4" y="4" width="56" height="56" fill="#1e1c22" opacity=".26"/></g><rect x="4.22" y="4.22" width="55.55" height="55.55" rx="12.5" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="0.50"/><path d="M17 19h24M17 29h30M17 41h14" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/><path d="M38 36v10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>';
 }
 
 // ---------------------------------------------------------------- Dateien
