@@ -1,7 +1,7 @@
 {
   "name": "textline",
   "productName": "Textline",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Schneller Text- und Code-Editor mit Farben für viele Sprachen und Python zum Ausführen.",
   "main": "src/main.js",
   "private": true,
@@ -36,7 +36,7 @@
     "@codemirror/view": "^6.43.15",
     "@lezer/highlight": "^1.2.5",
     "codemirror": "^6.0.2",
-    "electron": "^44.9.3",
+    "electron": "43.8.7",
     "electron-builder": "^26.18.0",
     "esbuild": "^0.28.2",
     "marked": "^18.1.1"
@@ -46,7 +46,7 @@
     "iconv-lite": "^0.7.3"
   },
   "allowScripts": {
-    "electron@44.9.3": true,
+    "electron@43.8.7": true,
     "esbuild@0.28.2": true
   },
   "repository": {
@@ -544,7 +544,10 @@
           ]
         }
       ],
-      "artifactName": "Textline-${version}-mac-${arch}.${ext}"
+      "artifactName": "Textline-${version}-mac-${arch}.${ext}",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "minimumSystemVersion": "12.0"
     }
   }
 }

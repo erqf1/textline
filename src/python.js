@@ -122,22 +122,64 @@ class Python {
       }
       this.procs.set(id, child);
       this.send('py:event', { id, kind, type: 'start', pid: child.pid });
+      // Ausgabe gebündelt schicken (höchstens alle 40 ms): Ein Programm wie "while True: print(i)" schreibt
+      // zehntausende Zeilen pro Sekunde, einzeln würden sie das Fenster einfrieren. Kommt mehr, als man lesen
+      // kann, bleiben nur die neuesten 64 KB; der Rest wird als "übersprungen" gemeldet.
+      const MAX_BATCH = 64 * 1024;
+      const NL = String.fromCharCode(10);
+      const countLines = (str) => str.split(NL).length - 1;
+      let queue = [];
+      let queued = 0;
+      let skipped = 0;
+      let timer = null;
+      const flush = () => {
+        clearTimeout(timer);
+        timer = null;
+        if (skipped) this.send('py:event', { id, kind, type: 'skip', lines: skipped });
+        skipped = 0;
+        for (const [type, data] of queue) this.send('py:event', { id, kind, type, data });
+        queue = [];
+        queued = 0;
+      };
       const pipe = (stream, type) => {
         stream.setEncoding('utf8');
         stream.on('data', (data) => {
           output += data;
           if (output.length > 200000) output = output.slice(-100000);
-          this.send('py:event', { id, kind, type, data });
+          const last = queue[queue.length - 1];
+          if (last && last[0] === type) last[1] += data;
+          else queue.push([type, data]);
+          queued += data.length;
+          while (queued > MAX_BATCH && queue.length) {
+            // älteste Ausgabe zeilenweise wegwerfen
+            const first = queue[0];
+            const over = queued - MAX_BATCH;
+            if (first[1].length <= over) {
+              skipped += countLines(first[1]);
+              queued -= first[1].length;
+              queue.shift();
+              continue;
+            }
+            let cut = first[1].indexOf(NL, over);
+            cut = cut < 0 ? first[1].length : cut + 1;
+            skipped += countLines(first[1].slice(0, cut));
+            queued -= cut;
+            first[1] = first[1].slice(cut);
+            if (!first[1]) queue.shift();
+          }
+          if (!timer) timer = setTimeout(flush, 40);
         });
       };
       pipe(child.stdout, 'out');
       pipe(child.stderr, 'err');
       child.on('error', (e) => {
+        flush();
         this.procs.delete(id);
         this.send('py:event', { id, kind, type: 'exit', code: -1, error: String(e.message || e) });
         resolve({ code: -1, output: output + String(e.message || e) });
       });
       child.on('close', (code, signal) => {
+        flush();
         this.procs.delete(id);
         this.send('py:event', { id, kind, type: 'exit', code, signal });
         resolve({ code, output });

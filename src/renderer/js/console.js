@@ -3,6 +3,8 @@
 import { h } from './ui.js';
 
 const MAX_NODES = 4000;
+// so viele Zeichen behält die Konsole höchstens, ältere fallen vorne weg
+const MAX_CHARS = 400000;
 
 export function createConsole({ root, api, T, getPython, onJump, onState }) {
   const out = root.querySelector('.console-out');
@@ -12,6 +14,7 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
   let shellId = null;
   let shellStarting = null;
   let runFile = null;
+  let stopping = null; // nach "Stopp" kommt noch Ausgabe, bis der Prozess wirklich weg ist - die wird nicht mehr gezeigt
   const history = [];
   let hIndex = -1;
   let atLineStart = true;
@@ -21,9 +24,27 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
   };
   const busy = () => runId !== null;
 
+  // Unten mitlaufen, solange man unten ist; wer hochscrollt, bleibt dort stehen
+  // Nur echtes Hochscrollen (Mausrad, Scrollbalken ziehen) löst das; Scroll-Ereignisse vom Kürzen oben zählen nicht.
+  let stick = true;
+  let dragging = false;
+  const atBottom = () => out.scrollHeight - out.scrollTop - out.clientHeight < 80;
+  out.addEventListener('wheel', (e) => {
+    if (e.deltaY < 0) stick = false;
+    else requestAnimationFrame(() => (stick = stick || atBottom()));
+  }, { passive: true });
+  out.addEventListener('pointerdown', () => (dragging = true));
+  window.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false;
+    stick = atBottom();
+  });
+  out.addEventListener('scroll', () => {
+    if (dragging) stick = atBottom();
+    else if (atBottom()) stick = true;
+  });
   function scrollDown() {
-    const near = out.scrollHeight - out.scrollTop - out.clientHeight < 80;
-    if (near) requestAnimationFrame(() => (out.scrollTop = out.scrollHeight));
+    if (stick) out.scrollTop = out.scrollHeight;
   }
 
   function linkify(text, cls) {
@@ -47,12 +68,25 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
     return span;
   }
 
+  let chars = 0;
+  let scrollQueued = false;
   function append(text, cls = 'out') {
     if (!text) return;
     out.append(linkify(text, cls));
+    chars += text.length;
     atLineStart = text.endsWith('\n');
-    while (out.childNodes.length > MAX_NODES) out.firstChild.remove();
-    scrollDown();
+    while (out.firstChild && (out.childNodes.length > MAX_NODES || chars > MAX_CHARS)) {
+      chars -= out.firstChild.textContent.length;
+      out.firstChild.remove();
+    }
+    // höchstens einmal pro Bild nach unten scrollen
+    if (!scrollQueued) {
+      scrollQueued = true;
+      requestAnimationFrame(() => {
+        scrollQueued = false;
+        scrollDown();
+      });
+    }
   }
   const line = (text, cls) => {
     if (!atLineStart) append('\n', cls);
@@ -62,6 +96,7 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
   api.py.onEvent((ev) => {
     if (ev.kind === 'pip') return;
     if (ev.id !== runId && ev.id !== shellId) return;
+    if ((ev.type === 'out' || ev.type === 'err' || ev.type === 'skip') && ev.id === stopping) return;
     if (ev.type === 'out' || ev.type === 'err') {
       let data = ev.data;
       if (ev.id === shellId && ev.type === 'err') {
@@ -73,6 +108,8 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
         }
       }
       append(data, ev.type);
+    } else if (ev.type === 'skip') {
+      line(T('consoleSkipped', { n: ev.lines.toLocaleString() }), 'info');
     } else if (ev.type === 'exit') {
       if (ev.id === runId) {
         runId = null;
@@ -155,6 +192,7 @@ export function createConsole({ root, api, T, getPython, onJump, onState }) {
   function stop(quiet) {
     if (!runId) return Promise.resolve();
     const id = runId;
+    stopping = id;
     api.py.stop(id);
     if (!quiet) line(T('consoleStopped'), 'warn');
     return new Promise((resolve) => {

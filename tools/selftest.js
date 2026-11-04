@@ -229,6 +229,52 @@ module.exports = function selftest(win, dir, { python }) {
       await wait(1500);
       await shot('settings-python-de');
       await key('Escape');
+      // ---------------------------------------------------------- Endlosschleife: Fenster bleibt bedienbar, Stopp geht
+      const loopTest = async () => {
+        const env = await python.resolve({ pythonMode: 'env' });
+        if (env.needsEnv) await python.ensureEnv();
+        const loop = path.join(dir, 'schleife.py');
+        fs.writeFileSync(loop, 'i = 0\nwhile True:\n    i += 1\n    print("Zeile", i)\n');
+        await act(`window.__textline.openPaths([${JSON.stringify(loop)}])`);
+        await wait(600);
+        await key('F5');
+        let running = false;
+        for (let i = 0; i < 120 && !running; i++) {
+          await wait(250);
+          running = await js(`document.querySelector('.console-out').textContent.includes('Zeile')`);
+        }
+        check('endless loop starts', running);
+        // 4 Sekunden laufen lassen und dabei messen, wie schnell das Fenster antwortet
+        let worst = 0;
+        for (let i = 0; i < 16; i++) {
+          await wait(250);
+          const t0 = Date.now();
+          await js('1');
+          worst = Math.max(worst, Date.now() - t0);
+        }
+        check('window stays responsive during the loop', worst < 400, `${worst} ms`);
+        const info = await js(`(() => { const o = document.querySelector('.console-out'); return { nodes: o.childNodes.length, chars: o.textContent.length, skip: /übersprungen|skipped/.test(o.textContent) }; })()`);
+        check('console stays small', info.chars <= 400000 + 70000 && info.nodes <= 4000, JSON.stringify({ nodes: info.nodes, chars: info.chars }));
+        check('skipped lines are reported', info.skip);
+        await shot('endless-loop');
+        await key('F5', ['shift']);
+        let stopped = false;
+        for (let i = 0; i < 40 && !stopped; i++) {
+          await wait(250);
+          stopped = await js(`(() => { const t = document.querySelector('.console-out').textContent; const i = t.lastIndexOf('Gestoppt'); return i >= 0 && !/Zeile/.test(t.slice(i)); })()`);
+        }
+        check('Shift+F5 stops the endless loop (no output after "Gestoppt")', stopped);
+        await wait(400);
+        check('console follows to the bottom', await js(`(() => { const o = document.querySelector('.console-out'); return o.scrollHeight - o.scrollTop - o.clientHeight < 80; })()`));
+        await shot('endless-loop-stopped');
+      };
+      if (process.env.TEXTLINE_TEST === 'loop') {
+        await loopTest();
+        log(`RESULT: ${fails} failed`);
+        python.stopAll();
+        setTimeout(() => app.exit(0), 300);
+        return;
+      }
       await fire(`window.__textline.languagePicker()`);
       await type('ru');
       await shot('language-picker');

@@ -12,8 +12,52 @@ let currentKind = 'run';
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-const send = (ev) => postMessage({ ev: { kind: currentKind, ...ev } });
-const out = (type, data) => current !== null && send({ id: current, type, data });
+// Ausgabe gebündelt schicken: "while True: print(i)" würde sonst die Seite mit Nachrichten fluten.
+// Der Worker steckt währenddessen in Python fest, Zeitgeber laufen also nicht - deshalb wird beim Schreiben
+// selbst alle 40 ms geschickt und am Ende jedes Befehls. Mehr als 64 KB auf einmal: nur die neuesten behalten.
+const MAX_BATCH = 64 * 1024;
+const NL = String.fromCharCode(10);
+const countLines = (str) => str.split(NL).length - 1;
+let pend = []; // [type, data, id, kind]
+let pendLen = 0;
+let skipped = 0;
+let lastFlush = 0;
+function flushOut() {
+  if (skipped && pend.length) postMessage({ ev: { kind: pend[0][3], id: pend[0][2], type: 'skip', lines: skipped } });
+  for (const [type, data, id, kind] of pend) postMessage({ ev: { kind, id, type, data } });
+  pend = [];
+  pendLen = 0;
+  skipped = 0;
+  lastFlush = Date.now();
+}
+const send = (ev) => {
+  flushOut();
+  postMessage({ ev: { kind: currentKind, ...ev } });
+};
+const out = (type, data) => {
+  if (current === null || !data) return;
+  const last = pend[pend.length - 1];
+  if (last && last[0] === type && last[2] === current) last[1] += data;
+  else pend.push([type, data, current, currentKind]);
+  pendLen += data.length;
+  while (pendLen > MAX_BATCH && pend.length) {
+    const first = pend[0];
+    const over = pendLen - MAX_BATCH;
+    if (first[1].length <= over) {
+      skipped += countLines(first[1]);
+      pendLen -= first[1].length;
+      pend.shift();
+      continue;
+    }
+    let cut = first[1].indexOf(NL, over);
+    cut = cut < 0 ? first[1].length : cut + 1;
+    skipped += countLines(first[1].slice(0, cut));
+    pendLen -= cut;
+    first[1] = first[1].slice(cut);
+    if (!first[1]) pend.shift();
+  }
+  if (Date.now() - lastFlush > 40) flushOut();
+};
 
 function load() {
   if (!loading) {
@@ -35,6 +79,7 @@ function readLine() {
     out('err', `\n${self.noInputText}\n`);
     return null;
   }
+  flushOut();
   postMessage({ needInput: current });
   Atomics.store(stdin.ctrl, 0, 0);
   while (Atomics.load(stdin.ctrl, 0) === 0) Atomics.wait(stdin.ctrl, 0, 0, 500);
@@ -194,6 +239,8 @@ onmessage = async (e) => {
     current = m.id;
     currentKind = 'pip';
     const code = await pip(m.args, m.files);
+    flushOut();
     postMessage({ req: m.req, result: { id: m.id, code } });
   }
+  flushOut();
 };
