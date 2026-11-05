@@ -9,6 +9,8 @@ import * as E from './editor.js';
 import { createConsole } from './console.js';
 import { openPackages } from './packages.js';
 import { openSettings } from './settings-dialog.js';
+import { openDefaultsDialog } from './defaults-dialog.js';
+import DSTR from '../../shared/default-strings.js';
 import { createPreview } from './preview.js';
 import { undo, redo, selectAll, copyLineDown, deleteLine, moveLineUp, moveLineDown, indentMore, indentLess, toggleComment, cursorMatchingBracket } from '@codemirror/commands';
 import { openSearchPanel, closeSearchPanel, searchPanelOpen, findNext, findPrevious, selectNextOccurrence, selectSelectionMatches } from '@codemirror/search';
@@ -1070,7 +1072,7 @@ function menus() {
         ? [item('download', { disabled: noTab() }), INFO.canShare ? item('share', { disabled: noTab() }) : null].filter(Boolean)
         : [item('reveal', { disabled: !active || !active.path }), item('copyPath', { disabled: !active || !active.path })]),
       '-', item('closeTab', { disabled: noTab() }), item('closeAll', { disabled: !tabs.length }), item('reopenClosed', { disabled: !closed.length }),
-      ...(WEB ? [] : ['-', item('quit')]),
+      ...(WEB ? [] : ['-', { label: DSTR.t(S.language, 'menu'), run: defaultAppsDialog }, '-', item('quit')]),
     ] },
     { id: 'edit', label: T('menuEdit'), items: [
       { ...item('undo'), shortcut: keyLabel('Mod+Z', MAC), disabled: noTab() }, { ...item('redo'), shortcut: keyLabel(MAC ? 'Mod+Shift+Z' : 'Mod+Y', MAC), disabled: noTab() },
@@ -1102,6 +1104,10 @@ function menus() {
     ].concat(py ? [] : []) },
     { id: 'help', label: T('menuHelp'), items: [item('shortcuts'), item('about')] },
   ];
+}
+
+function defaultAppsDialog() {
+  openDefaultsDialog({ platform: INFO.platform, state: api.defaults.state, apply: api.defaults.apply }, S.language);
 }
 
 function settingsDialog(page) {
@@ -1511,7 +1517,7 @@ async function main() {
   relabel();
   // Python im Hintergrund schon mal suchen (für die Statusleiste und die Syntaxprüfung)
   setTimeout(() => getPython(false), 1500);
-  window.__textline = { detect: (n, first = '') => { const l = detectLanguage(n, first); return l ? l.name : null; }, tabs, get active() { return active; }, get view() { return view; }, CMD, update, openPaths, newFile, attachLanguage, findLanguage, settingsDialog, languagePicker, showConsole, togglePreview, S: () => S };
+  window.__textline = { detect: (n, first = '') => { const l = detectLanguage(n, first); return l ? l.name : null; }, tabs, get active() { return active; }, get view() { return view; }, CMD, update, openPaths, newFile, attachLanguage, findLanguage, settingsDialog, defaultAppsDialog, languagePicker, showConsole, togglePreview, S: () => S };
 }
 
 main();

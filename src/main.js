@@ -9,6 +9,7 @@ const path = require('path');
 const files = require('./files');
 const fileIcons = require('./fileicons');
 const { Python } = require('./python');
+const { setupDefaults } = require('./defaults');
 const { t: tr } = require('./shared/i18n');
 
 const APP_ID = 'win.mert.Textline';
@@ -206,6 +207,9 @@ ipcMain.handle('app:initial-files', () => {
   pendingFiles.length = 0;
   return list;
 });
+// "Als Standard-App festlegen"
+setupDefaults({ ...require('./shared/default-types'), ipcMain, shell });
+
 ipcMain.handle('app:info', () => ({
   version: app.getVersion(),
   platform: process.platform,

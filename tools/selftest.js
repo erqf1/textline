@@ -268,6 +268,39 @@ module.exports = function selftest(win, dir, { python }) {
         check('console follows to the bottom', await js(`(() => { const o = document.querySelector('.console-out'); return o.scrollHeight - o.scrollTop - o.clientHeight < 80; })()`));
         await shot('endless-loop-stopped');
       };
+      // ---------------------------------------------------------- Als Standard-App festlegen (nur lesen, nichts umstellen)
+      if (process.env.TEXTLINE_TEST === 'defaults') {
+        const st = await js('window.api.defaults.state()');
+        log(`defaults state: ${JSON.stringify(st).slice(0, 900)}`);
+        check('default apps: state for all 9 groups', st && st.groups.length === 9);
+        check('default apps: current program known for text files', st.groups.find((g) => g.id === 'text').current !== '' || st.groups.find((g) => g.id === 'text').mine);
+        await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`);
+        const opened = await js(`(() => { const f = document.querySelector('.menubar-item'); if (!f) return false; f.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); return true; })()`);
+        await wait(300);
+        const viaMenu = await js(`(() => { const it = [...document.querySelectorAll('.menu-item')].find((x) => /Standard-App|default app/i.test(x.textContent)); if (it) it.click(); return !!it; })()`);
+        log(`defaults: menu entry found ${viaMenu}`);
+        if (!viaMenu) await fire('window.__textline.defaultAppsDialog()');
+        let rows = 0;
+        for (let i = 0; i < 40 && rows < 9; i++) {
+          await wait(250);
+          rows = await js(`document.querySelectorAll('.defaults-row').length`);
+        }
+        check('default apps: dialog lists 9 groups', rows === 9, `menu ${opened}/${viaMenu}, rows ${rows}`);
+        const pre = await js(`[...document.querySelectorAll('.defaults-row')].map((r) => (r.querySelector('input').checked ? '1' : '0') + r.querySelector('b').textContent + '=' + r.querySelector('.defaults-now').textContent).join(' | ')`);
+        log(`defaults rows: ${pre}`);
+        check('default apps: HTML and SVG not preselected', !/1HTML|1SVG/.test(pre));
+        log(`defaults dialogs: ${await js("document.querySelectorAll('.defaults-dialog').length")}, loading: ${await js("document.querySelectorAll('.defaults-loading').length")}`);
+        await wait(800);
+        const [w0, h0] = win.getSize();
+        win.setSize(w0 + 1, h0);
+        await wait(300);
+        win.setSize(w0, h0);
+        await wait(300);
+        await shot('default-apps');
+        log(`RESULT: ${fails} failed`);
+        setTimeout(() => app.exit(0), 300);
+        return;
+      }
       if (process.env.TEXTLINE_TEST === 'loop') {
         await loopTest();
         log(`RESULT: ${fails} failed`);

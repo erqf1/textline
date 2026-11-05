@@ -40,6 +40,11 @@ contextBridge.exposeInMainWorld('api', {
   reveal: (p) => invoke('shell:reveal', p),
   printHtml: (html) => invoke('print:html', html),
 
+  defaults: {
+    state: () => invoke('defaults:state'),
+    apply: (ids) => invoke('defaults:apply', ids),
+  },
+
   py: {
     resolve: (force) => invoke('py:resolve', force),
     ensureEnv: () => invoke('py:ensure-env'),

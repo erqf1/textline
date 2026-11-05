@@ -257,6 +257,8 @@
   DeleteRegValue HKCU "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
   DeleteRegValue HKLM "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
   WriteRegStr SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.${NAME}" ""
+  ; für "Standard-Apps" in den Windows-Einstellungen (dort lässt sich Textline je Typ als Standard wählen)
+  WriteRegStr SHCTX "Software\Textline\Capabilities\FileAssociations" ".${EXT}" "Textline.${NAME}"
 !macroend
 
 !macro textlineRemoveType EXT NAME
@@ -388,7 +390,12 @@
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\DefaultIcon" "" "$INSTDIR\resources\filetypes\light\code.ico"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  DeleteRegKey SHCTX "Software\Textline\Capabilities\FileAssociations"
   !insertmacro textlineTypes textlineAddType
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationName" "Textline"
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationDescription" "$0"
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationIcon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\RegisteredApplications" "Textline" "Software\Textline\Capabilities"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "" "$0"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
@@ -409,6 +416,9 @@
     !insertmacro textlineRetiredProgIds textlineDropRetiredProgId
     DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
     DeleteRegKey SHCTX "Software\Classes\*\shell\Textline"
+    DeleteRegKey SHCTX "Software\Textline\Capabilities"
+    DeleteRegKey /ifempty SHCTX "Software\Textline"
+    DeleteRegValue SHCTX "Software\RegisteredApplications" "Textline"
     System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   ${endIf}
 !macroend
