@@ -318,6 +318,8 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
   DeleteRegValue HKCU "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
   DeleteRegValue HKLM "Software\Classes\.${EXT}\OpenWithProgids" "Textline.File"
   WriteRegStr SHCTX "Software\Classes\.${EXT}\OpenWithProgids" "Textline.${NAME}" ""
+  ; für "Standard-Apps" in den Windows-Einstellungen (dort lässt sich Textline je Typ als Standard wählen)
+  WriteRegStr SHCTX "Software\Textline\Capabilities\FileAssociations" ".${EXT}" "Textline.${NAME}"
 !macroend
 
 !macro textlineRemoveType EXT NAME
@@ -430,6 +432,49 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
   Pop $R1
 !macroend
 
+; Desktop-Symbol: nur bei der Erst-Installation anlegen. Bei Updates (electron-updater oder neues Setup über eine
+; vorhandene Installation) nie anfassen - sonst springt es auf einen neuen Platz oder kommt nach dem Löschen wieder.
+; electron-builder legt es deshalb gar nicht an (createDesktopShortcut: false), das macht nur dieser Code.
+; customInit läuft, bevor die alte Version entfernt wird: merken, ob Textline schon installiert war und ob es das
+; Symbol gab. Deinstaller bis 1.3.0 löschen es beim Update per neuem Setup selbst - dann einmal neu anlegen.
+!macro customInit
+  Var /GLOBAL textlineWasInstalled
+  Var /GLOBAL textlineDesktopLinkBefore
+  Push $R0
+  StrCpy $textlineWasInstalled "0"
+  StrCpy $textlineDesktopLinkBefore ""
+  ${If} ${isUpdated}
+    StrCpy $textlineWasInstalled "1"
+  ${EndIf}
+  ReadRegStr $R0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $R0 != ""
+    StrCpy $textlineWasInstalled "1"
+  ${EndIf}
+  ReadRegStr $R0 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $R0 != ""
+    StrCpy $textlineWasInstalled "1"
+  ${EndIf}
+  SetShellVarContext all
+  ${If} ${FileExists} "$DESKTOP\${SHORTCUT_NAME}.lnk"
+    StrCpy $textlineDesktopLinkBefore "$DESKTOP\${SHORTCUT_NAME}.lnk"
+  ${EndIf}
+  SetShellVarContext current
+  ${If} ${FileExists} "$DESKTOP\${SHORTCUT_NAME}.lnk"
+    StrCpy $textlineDesktopLinkBefore "$DESKTOP\${SHORTCUT_NAME}.lnk"
+  ${EndIf}
+  ${If} $installMode == "all"
+    SetShellVarContext all
+  ${EndIf}
+  Pop $R0
+!macroend
+
+!macro textlineDesktopLink LINK
+  CreateShortCut "${LINK}" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  ClearErrors
+  ; gleiche AppUserModelID wie das Fenster (app.setAppUserModelId), sonst zwei Symbole in der Taskleiste
+  WinShell::SetLnkAUMI "${LINK}" "${APP_ID}"
+!macroend
+
 !macro customInstall
   Push $0
   Push $1
@@ -449,12 +494,23 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}" "FriendlyAppName" "Textline"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\DefaultIcon" "" "$INSTDIR\resources\filetypes\light\code.ico"
   WriteRegStr SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+  DeleteRegKey SHCTX "Software\Textline\Capabilities\FileAssociations"
   !insertmacro textlineTypes textlineAddType
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationName" "Textline"
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationDescription" "$0"
+  WriteRegStr SHCTX "Software\Textline\Capabilities" "ApplicationIcon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+  WriteRegStr SHCTX "Software\RegisteredApplications" "Textline" "Software\Textline\Capabilities"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "" "$0"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline" "Icon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
   WriteRegStr SHCTX "Software\Classes\*\shell\Textline\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
   !insertmacro textlineEditTypes textlineAddEdit
   !insertmacro textlineEditTypes textlineAddRecent
+  ${If} $textlineWasInstalled == "0"
+    !insertmacro textlineDesktopLink "$newDesktopLink"
+  ${ElseIf} $textlineDesktopLinkBefore != ""
+  ${AndIfNot} ${FileExists} "$textlineDesktopLinkBefore"
+    !insertmacro textlineDesktopLink "$textlineDesktopLinkBefore"
+  ${EndIf}
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   Pop $1
   Pop $0
@@ -470,6 +526,12 @@ NSH = r'''; Erzeugt von tools/make-filetype-icons.py aus tools/filetypes.json - 
     !insertmacro textlineRetiredProgIds textlineDropRetiredProgId
     DeleteRegKey SHCTX "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}"
     DeleteRegKey SHCTX "Software\Classes\*\shell\Textline"
+    DeleteRegKey SHCTX "Software\Textline\Capabilities"
+    DeleteRegKey /ifempty SHCTX "Software\Textline"
+    DeleteRegValue SHCTX "Software\RegisteredApplications" "Textline"
+    ; Desktop-Symbol nur beim echten Deinstallieren entfernen, nie beim Update
+    WinShell::UninstShortcut "$oldDesktopLink"
+    Delete "$oldDesktopLink"
     System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   ${endIf}
 !macroend

@@ -14,6 +14,8 @@ Schneller Text- und Code-Editor für Windows, Linux und macOS. Farben für über
 
 Der Installer stellt **keine Standard-Programme** um und fasst den Standardwert einer Endung nie an: `.py`-Dateien laufen per Doppelklick weiter wie gewohnt. Ausführbare Dateien und Skripte (`.bat`, `.cmd`, `.ps1`, `.js`, `.vbs`, `.reg` …) trägt er nicht als neue App ein (sonst fragt Windows beim Doppelklick nach einer App, statt sie auszuführen) – sie starten weiter per Doppelklick. Textline steht dort als zuletzt benutzte App unter „Öffnen mit“ und als „Mit Textline bearbeiten“ im Rechtsklick-Menü. Welche Typen das sind, steht in `tools/filetypes.json` (`scripts`). Wer Textline als Standard will, wählt es einmal unter „Öffnen mit“ → „Immer“.
 
+Das **Desktop-Symbol** legt der Installer nur bei der ersten Installation an. Updates (automatisch oder per neuem Setup) lassen es in Ruhe: Es bleibt an seinem Platz, und wer es gelöscht hat, bekommt es nicht zurück. Beim Deinstallieren wird es entfernt.
+
 ### Linux
 
 `.deb` und `.pacman` installieren sich wie gewohnt über den Paketmanager. Bei `.tar.gz`: entpacken, dann `./textline` ausführen. Startet die App mit einer Meldung zum „SUID sandbox helper“ nicht (z. B. Ubuntu 24.04+):
@@ -78,3 +80,5 @@ node tools/make-icon.js   # App-Symbol neu erzeugen
 ```
 
 Selbsttest (tippt echte Tasten in ein verstecktes Fenster, startet Python, macht Bilder): `npx electron . --selftest <ordner>`.
+
+Bilder für die Website (ebenfalls unsichtbar, Englisch und Deutsch, PNG und WebP): `npx electron . --force-device-scale-factor=2 --siteshots <ordner>`. Nur einige Bilder: `TEXTLINE_SHOTS=theme,file` (Anfang des Namens), nur eine Sprache: `TEXTLINE_SHOT_LANGS=de`.
