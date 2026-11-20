@@ -430,6 +430,12 @@ module.exports = function siteshots(win, dir, { python }) {
   // Konsole zu und Cursor an den Anfang, damit jedes Bild gleich aufgeräumt aussieht
   const tidy = async () => {
     await closeDialogs();
+    // Suchleiste schließen (Escape im Suchfeld, wie von Hand)
+    if (await js(`!!document.querySelector('.cm-search')`)) {
+      await js(`document.querySelector('.cm-search input[name=search]').focus()`);
+      await key('Escape');
+      await wait(200);
+    }
     await fire(`window.__textline.showConsole(false)`);
     await js(`(() => { const v = window.__textline.view; if (v) { v.dispatch({ selection: { anchor: 0 }, scrollIntoView: true }); v.focus(); } })()`);
     await wait(200);
@@ -573,7 +579,6 @@ module.exports = function siteshots(win, dir, { python }) {
           await wait(300);
           await shot(`search-${lang}`);
           await closeDialogs();
-          await js(`(() => { const p = document.querySelector('.cm-search'); return p && p.querySelector('[name=close]') && p.querySelector('[name=close]').click(); })()`);
           await tidy();
           await fire(`window.__textline.CMD.replace.run()`);
           await wait(300);
@@ -584,7 +589,6 @@ module.exports = function siteshots(win, dir, { python }) {
           await type(c(lang, 'attempts', 'runden'));
           await wait(300);
           await shot(`replace-${lang}`);
-          await js(`(() => { const p = document.querySelector('.cm-search'); return p && p.querySelector('[name=close]') && p.querySelector('[name=close]').click(); })()`);
           await tidy();
         }
 
