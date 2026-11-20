@@ -1,0 +1,37 @@
+name: Prüfen
+
+# Baut bei jedem Pull Request auf echten Windows-, Linux- und macOS-Runnern, ohne etwas
+# zu veröffentlichen (prüft u. a., dass build/installer.nsh mit makensis durchgeht).
+# Unter Linux läuft zusätzlich der unsichtbare Selbsttest (tools/selftest.js).
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools xvfb
+      - run: npm run bundle
+      - run: npx electron-builder --publish never
+      - if: runner.os == 'Linux'
+        name: Selbsttest (unsichtbar)
+        run: |
+          mkdir -p "$RUNNER_TEMP/selftest"
+          xvfb-run -a npx electron . --no-sandbox --selftest "$RUNNER_TEMP/selftest" || true
+          cat "$RUNNER_TEMP/selftest/selftest.txt"
+          grep -q PASS "$RUNNER_TEMP/selftest/selftest.txt"
+          ! grep -q '^FAIL' "$RUNNER_TEMP/selftest/selftest.txt"
